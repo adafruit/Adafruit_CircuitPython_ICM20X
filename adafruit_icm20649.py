@@ -57,44 +57,64 @@ from adafruit_register.i2c_bit import RWBit
 from adafruit_register.i2c_bits import RWBits
 
 
+class CV:
+    """struct helper"""
+
+    @classmethod
+    def add_values(cls, value_tuples):
+        cls.string = {}
+        cls.lsb = {}
+
+        for value_tuple in value_tuples:
+            name, value, string, lsb = value_tuple
+            setattr(cls, name, value)
+            cls.string[value] = string
+            cls.lsb[value] = lsb
+
+    @classmethod
+    def is_valid(cls, value):
+        return value in cls.string
+
+
+
+class AccelRange(CV):
+    """Options for `accelerometer_range`"""
+    pass
+
+AccelRange.add_values((
+    ('RANGE_4G', 0, 4, 8192),
+    ('RANGE_8G', 1, 8, 4096.0),
+    ('RANGE_16G', 2, 16, 2048),
+    ('RANGE_30G', 3, 30, 1024),
+))
+
+class GyroRange(CV):
+    """Options for `gyro_data_range`"""
+    pass
+
+GyroRange.add_values((
+    ('RANGE_500_DPS', 0, 500, 65.5),
+    ('RANGE_1000_DPS', 1, 1000, 32.8),
+    ('RANGE_2000_DPS', 2, 2000, 16.4),
+    ('RANGE_4000_DPS', 3, 4000, 8.2)
+))
 
 _ICM20649_DEFAULT_ADDRESS = 0x68 #icm20649 default i2c address
-_ICM20649_DEVICE_ID = 0xE1
+_ICM20649_DEVICE_ID = 0xE1 # Correct context of WHO_AM_I register
 
 # Bank 0
 _ICM20649_WHO_AM_I = 0x00  # device_id register
 _ICM20649_REG_BANK_SEL = 0x7F # register bank selection register
 _ICM20649_PWR_MGMT_1  = 0x06 #primary power management register
 _ICM20649_ACCEL_XOUT_H = 0x2D # first byte of accel data
+_ICM20649_GYRO_XOUT_H = 0x33 # first byte of accel data
 
 # Bank 2
+_ICM20649_GYRO_SMPLRT_DIV = 0x00
 _ICM20649_ACCEL_SMPLRT_DIV_1 = 0x10
 _ICM20649_ACCEL_SMPLRT_DIV_2 = 0x11
 _ICM20649_ACCEL_CONFIG_1     = 0x14
 
-
-#TODO: CV-ify
-# GYRO_FS:
-# Sensitivity Scale Factor GYRO_FS_SEL = 0 65.5 LSB/(dps) 1
-# GYRO_FS_SEL = 1 32.8 LSB/(dps) 1
-# GYRO_FS_SEL = 2 16.4 LSB/(dps) 1
-# GYRO_FS_SEL = 3 8.2 LSB/(dps) 1
-
-#ACCEL_FS:
-# ACCEL_FS = 0 8,192 LSB/g 1
-# ACCEL_FS = 1 4,096 LSB/g 1
-# ACCEL_FS = 2 2,048 LSB/g 1
-# ACCEL_FS = 3 1,024 LSB/g 1
-
-# Accel DLPF Bandwidth CV:
-# 000 = 246 Hz / 1209 Hz if FCHOICE is 0
-# 001 = 246 Hz
-# 010 = 111.4 Hz
-# 011 = 50.4 Hz
-# 100 = 23.9 Hz
-# 101 = 11.5 Hz
-# 110 = 5.7 Hz
-# 111 = 473 Hz
 
 G_TO_ACCEL           = 9.80665
 
@@ -106,23 +126,24 @@ class ICM20649:
 
     """
 
+    # Bank 0
     _device_id = ROUnaryStruct(_ICM20649_WHO_AM_I, "<B")
     _bank = RWBits(2, _ICM20649_REG_BANK_SEL, 4)
     _reset = RWBit(_ICM20649_PWR_MGMT_1, 7)
     _sleep = RWBit(_ICM20649_PWR_MGMT_1, 6)
     _clock_source = RWBits(3, _ICM20649_PWR_MGMT_1, 0)
 
+    _raw_accel_data = Struct(_ICM20649_ACCEL_XOUT_H, ">hhh")
+    _raw_gyro_data = Struct(_ICM20649_GYRO_XOUT_H, ">hhh")
+
+    # Bank 2
     _accel_dlpf_enable = RWBits(1, _ICM20649_ACCEL_CONFIG_1, 0)
-    _accel_scale = RWBits(2, _ICM20649_ACCEL_CONFIG_1, 1)
+    _accel_range = RWBits(2, _ICM20649_ACCEL_CONFIG_1, 1)
     _accel_dlpf_config = RWBits(3, _ICM20649_ACCEL_CONFIG_1, 3)
+
     # this value is a 12-bit register spread across two bytes, big-endian first
     _accel_rate_divisor = UnaryStruct(_ICM20649_ACCEL_SMPLRT_DIV_1,">H" )
-
-    # readByte(ICM20649_ADDR, ACCEL_XOUT_H , buf, 6);
-    _raw_accel_data = Struct(_ICM20649_ACCEL_XOUT_H, ">hhh")
-
-
-
+    # _gyro_rate_divisor = UnaryStruct(_ICM20649_GYRO_SMPLRT_DIV, ">B")
 
     def __init__(self, i2c_bus, address=_ICM20649_DEFAULT_ADDRESS):
         self.i2c_device = i2c_device.I2CDevice(i2c_bus, address)
@@ -137,14 +158,9 @@ class ICM20649:
         self._bank = 0
         self._sleep = False        
 
-        # //switch to user bank 2
         self._bank = 2
-        
-        # /* Configure the accelerometer */
-
-        # SET DEFAULT RANGE
-        self._accel_scale = 1 # 8G; default is 4G
-        self._accel_dlpf_enable = True
+        self._accel_range = AccelRange.RANGE_8G
+        self._cached_accel_range = self._accel_range
 
         #TODO: CV-ify
         self._accel_dlpf_config = 3
@@ -154,16 +170,15 @@ class ICM20649:
         # 1125Hz/(1+20) = 53.57Hz
         self._accel_rate_divisor = 20 
 
-
         # writeByte(ICM20649_ADDR,GYRO_CONFIG_1, gyroConfig);
-        # delay(100); // 60 ms + 1/ODR
-        # // ODR =  1.1kHz/(1+GYRO_SMPLRT_DIV[7:0]) => 100 ?
-        # writeByte(ICM20649_ADDR,GYRO_SMPLRT_DIV, 0x0A); // Set gyro sample rate divider
+        self._gyro_range = GyroRange.RANGE_500_DPS
+        sleep(0.100)
+        self._cached_gyro_range = self._gyro_range
+
+        # //ORD = 1100Hz/(1+10) = 100Hz
+        # self._gyro_rate_divisor = 0x0A
 
         # //reset to register bank 0
-        # writeByte(ICM20649_ADDR,REG_BANK_SEL, 0x00);
-        # return true;
-        # back to bank 0 as the default
         self._bank = 0
 
     
@@ -178,24 +193,23 @@ class ICM20649:
 
         return(x, y, z)
 
-    # @property
-    # def gyro(self):
-    #     """ME GRYO, ME FLY PLANE"""
-    #     raw_gyro_data = self._raw_gyro_data
-    #     x = self._scale_gyro_data(raw_gyro_data[0])
-    #     y = self._scale_gyro_data(raw_gyro_data[1])
-    #     z = self._scale_gyro_data(raw_gyro_data[2])
+    @property
+    def gyro(self):
+        """ME GRYO, ME FLY PLANE"""
+        raw_gyro_data = self._raw_gyro_data
+        x = self._scale_gyro_data(raw_gyro_data[0])
+        y = self._scale_gyro_data(raw_gyro_data[1])
+        z = self._scale_gyro_data(raw_gyro_data[2])
 
-    #     return (x, y, z)
+        return (x, y, z)
 
-    # def _scale_xl_data(self, raw_measurement):
-    #     return raw_measurement * AccelRange.lsb[self._cached_accel_range] * _MILLI_G_TO_ACCEL
     def _scale_xl_data(self, raw_measurement):
-        return raw_measurement/ 4096 * G_TO_ACCEL # hard coded to 8G range
+        return raw_measurement / AccelRange.lsb[self._cached_accel_range] * G_TO_ACCEL
 
+    def _scale_gyro_data(self, raw_measurement):
 
-    # def _scale_gyro_data(self, raw_measurement):
-    #     return raw_measurement * GyroRange.lsb[self._cached_gyro_range] / 1000
+        return raw_measurement / GyroRange.lsb[self._cached_gyro_range]
+        return raw_measurement/65.5 #hardcoded to 500 dps
 
     @property
     def accel_data_rate(self):
@@ -205,3 +219,10 @@ class ICM20649:
     # self._accel_rate_divisor = 20 
         
         pass
+
+    @property
+    def gyro_range(self):
+        """Gyro data range"""
+        # writeByte(ICM20649_ADDR,GYRO_CONFIG_1, gyroConfig);
+        # delay(100); // 60 ms + 1/ODR
+        sleep(0.100)
