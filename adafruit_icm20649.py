@@ -111,6 +111,7 @@ _ICM20649_GYRO_XOUT_H = 0x33 # first byte of accel data
 
 # Bank 2
 _ICM20649_GYRO_SMPLRT_DIV = 0x00
+_ICM20649_GYRO_CONFIG_1     = 0x01
 _ICM20649_ACCEL_SMPLRT_DIV_1 = 0x10
 _ICM20649_ACCEL_SMPLRT_DIV_2 = 0x11
 _ICM20649_ACCEL_CONFIG_1     = 0x14
@@ -137,13 +138,13 @@ class ICM20649:
     _raw_gyro_data = Struct(_ICM20649_GYRO_XOUT_H, ">hhh")
 
     # Bank 2
+    _gyro_range = RWBits(2, _ICM20649_GYRO_CONFIG_1, 1)
     _accel_dlpf_enable = RWBits(1, _ICM20649_ACCEL_CONFIG_1, 0)
     _accel_range = RWBits(2, _ICM20649_ACCEL_CONFIG_1, 1)
     _accel_dlpf_config = RWBits(3, _ICM20649_ACCEL_CONFIG_1, 3)
 
     # this value is a 12-bit register spread across two bytes, big-endian first
     _accel_rate_divisor = UnaryStruct(_ICM20649_ACCEL_SMPLRT_DIV_1,">H" )
-    # _gyro_rate_divisor = UnaryStruct(_ICM20649_GYRO_SMPLRT_DIV, ">B")
 
     def __init__(self, i2c_bus, address=_ICM20649_DEFAULT_ADDRESS):
         self.i2c_device = i2c_device.I2CDevice(i2c_bus, address)
@@ -152,8 +153,6 @@ class ICM20649:
             print("found device id: ", self._device_id)
             raise RuntimeError("Failed to find ICM20649 - check your wiring!")
         self.reset()
-
-    def reset(self):
 
         self._bank = 0
         self._sleep = False        
@@ -181,6 +180,11 @@ class ICM20649:
         # //reset to register bank 0
         self._bank = 0
 
+    def reset(self):
+        self._reset = True
+        while self._reset:
+            sleep(0.001)
+
     
     @property
     def acceleration(self):
@@ -207,22 +211,36 @@ class ICM20649:
         return raw_measurement / AccelRange.lsb[self._cached_accel_range] * G_TO_ACCEL
 
     def _scale_gyro_data(self, raw_measurement):
-
         return raw_measurement / GyroRange.lsb[self._cached_gyro_range]
-        return raw_measurement/65.5 #hardcoded to 500 dps
 
     @property
-    def accel_data_rate(self):
-    # http://43zrtwysvxb2gf29r5o0athu-wpengine.netdna-ssl.com/wp-content/uploads/2016/06/DS-000192-ICM-20649-v1.0.pdf , page 65
-    # 1.125 kHz/(1+ACCEL_SMPLRT_DIV[11:0]), 
-    # 1125Hz/(1+20) = 53.57Hz
-    # self._accel_rate_divisor = 20 
-        
-        pass
+    def accelerometer_range(self):
+        """Adjusts the range of values that the sensor can measure, from +/- 4G to +/-30G
+        Note that larger ranges will be less accurate. Must be an `AccelRange`"""
+        return self._cached_accel_range
+
+    @accelerometer_range.setter
+    def accelerometer_range(self, value): #pylint: disable=no-member
+        if not AccelRange.is_valid(value):
+            raise AttributeError("range must be an `AccelRange`")
+        self._bank = 2
+        self._accel_range = value
+        self._cached_accel_range = value
+        self._bank = 0
 
     @property
     def gyro_range(self):
-        """Gyro data range"""
-        # writeByte(ICM20649_ADDR,GYRO_CONFIG_1, gyroConfig);
-        # delay(100); // 60 ms + 1/ODR
-        sleep(0.100)
+        """Adjusts the range of values that the sensor can measure, from 250 Degrees/second to 2000
+        degrees/s. Note that larger ranges will be less accurate. Must be a `GyroRange`"""
+        return self._cached_gyro_range
+
+    @gyro_range.setter
+    def gyro_range(self, value):
+        if not GyroRange.is_valid(value):
+            raise AttributeError("range must be a `GyroRange`")
+
+        self._bank = 2
+        self._gyro_range = value
+        self._cached_gyro_range = value
+        self._bank = 0
+        sleep(.100) # needed to let new range settle
