@@ -32,7 +32,6 @@ Implementation Notes
 
 **Hardware:**
 
-.. todo:: Add links to any specific hardware product page(s), or category page(s). Use unordered list & hyperlink rST
    inline format: "* `Link Text <url>`_"
 
 **Software and Dependencies:**
@@ -52,53 +51,10 @@ from time import sleep
 import adafruit_bus_device.i2c_device as i2c_device
 
 from adafruit_register.i2c_struct import UnaryStruct, ROUnaryStruct, Struct
-from adafruit_register.i2c_struct_array import StructArray
 from adafruit_register.i2c_bit import RWBit
 from adafruit_register.i2c_bits import RWBits
 
-
-class CV:
-    """struct helper"""
-
-    @classmethod
-    def add_values(cls, value_tuples):
-        cls.string = {}
-        cls.lsb = {}
-
-        for value_tuple in value_tuples:
-            name, value, string, lsb = value_tuple
-            setattr(cls, name, value)
-            cls.string[value] = string
-            cls.lsb[value] = lsb
-
-    @classmethod
-    def is_valid(cls, value):
-        return value in cls.string
-
-
-
-class AccelRange(CV):
-    """Options for `accelerometer_range`"""
-    pass
-
-AccelRange.add_values((
-    ('RANGE_4G', 0, 4, 8192),
-    ('RANGE_8G', 1, 8, 4096.0),
-    ('RANGE_16G', 2, 16, 2048),
-    ('RANGE_30G', 3, 30, 1024),
-))
-
-class GyroRange(CV):
-    """Options for `gyro_data_range`"""
-    pass
-
-GyroRange.add_values((
-    ('RANGE_500_DPS', 0, 500, 65.5),
-    ('RANGE_1000_DPS', 1, 1000, 32.8),
-    ('RANGE_2000_DPS', 2, 2000, 16.4),
-    ('RANGE_4000_DPS', 3, 4000, 8.2)
-))
-
+#pylint: disable=bad-whitespace
 _ICM20649_DEFAULT_ADDRESS = 0x68 #icm20649 default i2c address
 _ICM20649_DEVICE_ID = 0xE1 # Correct context of WHO_AM_I register
 
@@ -118,6 +74,51 @@ _ICM20649_ACCEL_CONFIG_1     = 0x14
 
 
 G_TO_ACCEL           = 9.80665
+#pylint: enable=bad-whitespace
+class CV:
+    """struct helper"""
+
+    @classmethod
+    def add_values(cls, value_tuples):
+        """Add CV values to the class"""
+        cls.string = {}
+        cls.lsb = {}
+
+        for value_tuple in value_tuples:
+            name, value, string, lsb = value_tuple
+            setattr(cls, name, value)
+            cls.string[value] = string
+            cls.lsb[value] = lsb
+
+    @classmethod
+    def is_valid(cls, value):
+        """Validate that a given value is a member"""
+        return value in cls.string
+
+
+
+class AccelRange(CV):
+    """Options for `accelerometer_range`"""
+    pass #pylint: disable=unnecessary-pass
+
+AccelRange.add_values((
+    ('RANGE_4G', 0, 4, 8192),
+    ('RANGE_8G', 1, 8, 4096.0),
+    ('RANGE_16G', 2, 16, 2048),
+    ('RANGE_30G', 3, 30, 1024),
+))
+
+class GyroRange(CV):
+    """Options for `gyro_data_range`"""
+    pass #pylint: disable=unnecessary-pass
+
+GyroRange.add_values((
+    ('RANGE_500_DPS', 0, 500, 65.5),
+    ('RANGE_1000_DPS', 1, 1000, 32.8),
+    ('RANGE_2000_DPS', 2, 2000, 16.4),
+    ('RANGE_4000_DPS', 3, 4000, 8.2)
+))
+
 
 class ICM20649:
     """Library for the ST ICM-20649 Wide-Range 6-DoF Accelerometer and Gyro.
@@ -144,7 +145,9 @@ class ICM20649:
     _accel_dlpf_config = RWBits(3, _ICM20649_ACCEL_CONFIG_1, 3)
 
     # this value is a 12-bit register spread across two bytes, big-endian first
-    _accel_rate_divisor = UnaryStruct(_ICM20649_ACCEL_SMPLRT_DIV_1,">H" )
+    _accel_rate_divisor = UnaryStruct(_ICM20649_ACCEL_SMPLRT_DIV_1, ">H")
+
+    _gyro_rate_divisor = UnaryStruct(_ICM20649_GYRO_SMPLRT_DIV, ">B")
 
     def __init__(self, i2c_bus, address=_ICM20649_DEFAULT_ADDRESS):
         self.i2c_device = i2c_device.I2CDevice(i2c_bus, address)
@@ -155,37 +158,38 @@ class ICM20649:
         self.reset()
 
         self._bank = 0
-        self._sleep = False        
+        self._sleep = False
 
         self._bank = 2
-        self._accel_range = AccelRange.RANGE_8G
+        self._accel_range = AccelRange.RANGE_8G #pylint: disable=no-member
         self._cached_accel_range = self._accel_range
 
         #TODO: CV-ify
         self._accel_dlpf_config = 3
 
-        
-        # 1.125 kHz/(1+ACCEL_SMPLRT_DIV[11:0]), 
+
+        # 1.125 kHz/(1+ACCEL_SMPLRT_DIV[11:0]),
         # 1125Hz/(1+20) = 53.57Hz
-        self._accel_rate_divisor = 20 
+        self._accel_rate_divisor = 20
 
         # writeByte(ICM20649_ADDR,GYRO_CONFIG_1, gyroConfig);
-        self._gyro_range = GyroRange.RANGE_500_DPS
+        self._gyro_range = GyroRange.RANGE_500_DPS #pylint: disable=no-member
         sleep(0.100)
         self._cached_gyro_range = self._gyro_range
 
         # //ORD = 1100Hz/(1+10) = 100Hz
-        # self._gyro_rate_divisor = 0x0A
+        self._gyro_rate_divisor = 0x0A
 
         # //reset to register bank 0
         self._bank = 0
 
     def reset(self):
+        """Perform a soft-reset on the sensor"""
         self._reset = True
         while self._reset:
             sleep(0.001)
 
-    
+
     @property
     def acceleration(self):
         """Acceleration!"""
@@ -244,3 +248,33 @@ class ICM20649:
         self._cached_gyro_range = value
         self._bank = 0
         sleep(.100) # needed to let new range settle
+
+    @property
+    def accelerometer_data_rate(self):
+        """The rate at which the accelerometer takes measurements"""
+        self._bank = 2
+        raw_rate_divisor = self._accel_rate_divisor
+        self._bank = 0
+        #rate_hz = 1125/(1+raw_rate_divisor)
+        return raw_rate_divisor
+
+    @accelerometer_data_rate.setter
+    def accelerometer_data_rate(self, value):
+        self._bank = 2
+        self._accel_rate_divisor = value
+        self._bank = 0
+
+    @property
+    def gyro_data_rate(self):
+        """The rate at which the gyro takes measurements"""
+        self._bank = 2
+        raw_rate_divisor = self._gyro_rate_divisor
+        self._bank = 0
+        # rate_hz = 1100/(1+raw_rate_divisor)
+        return raw_rate_divisor
+
+    @gyro_data_rate.setter
+    def gyro_data_rate(self, value):
+        self._bank = 2
+        self._gyro_rate_divisor = value
+        self._bank = 0

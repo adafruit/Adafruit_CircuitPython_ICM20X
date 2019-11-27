@@ -27,21 +27,36 @@ az_max = 0
 gx_max = 0
 gy_max = 0
 gz_max = 0
+# for div in [0, 10, 255, 4096]:
+#     print(div)
+#     ism.accelerometer_data_rate = div
+#     ism.accelerometer_data_rate
+#     time.sleep(1)
 
-# while True:
-for i in range(4):
+# print()
+# print()
+# print()
+# for div_g in [0, 10, 255]:
+#     print(div_g)
+#     ism.gyro_data_rate = div_g
+#     ism.gyro_data_rate
+#     time.sleep(1)
 
-    acceleration = ism.acceleration
-    # ax_max = printNewMax(acceleration[0], ax_max, "AX")
-    # ay_max = printNewMax(acceleration[1], ay_max, "AY")
-    # az_max = printNewMax(acceleration[2], az_max, "AZ")
-    gyro = ism.gyro
+ism.gyro_data_rate = 125
+ism.accelerometer_data_rate = 4095
+ism.gyro_data_rate
+ism.accelerometer_data_rate
+st = time.monotonic()
+while (time.monotonic()-st < 0.250):
 
-    # gx_max = printNewMax(gyro[0], gx_max, "GX")
-    # gy_max = printNewMax(gyro[1], gy_max, "GY")
-    # gz_max = printNewMax(gyro[2], gz_max, "GZ")
+    print("Accel X:%.2f Y:%.2f Z:%.2f ms^2 Gyro X:%.2f Y:%.2f Z:%.2f degrees/s"%(ism.acceleration+ism.gyro))
 
+#     acceleration = ism.acceleration
+#     # ax_max = printNewMax(acceleration[0], ax_max, "AX")
+#     # ay_max = printNewMax(acceleration[1], ay_max, "AY")
+#     # az_max = printNewMax(acceleration[2], az_max, "AZ")
+#     gyro = ism.gyro
 
-
-    print("Accel X:%.2f Y:%.2f Z:%.2f ms^2 Gyro X:%.2f Y:%.2f Z:%.2f degrees/s"%
-        (ism.acceleration+ism.gyro))
+#     # gx_max = printNewMax(gyro[0], gx_max, "GX")
+#     # gy_max = printNewMax(gyro[1], gy_max, "GY")
+#     # gz_max = printNewMax(gyro[2], gz_max, "GZ")
