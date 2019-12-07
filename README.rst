@@ -9,8 +9,8 @@ Introduction
     :target: https://discord.gg/nBQh6qu
     :alt: Discord
 
-.. image:: https://travis-ci.com/adafruit/Adafruit_CircuitPython_ICM20649.svg?branch=master
-    :target: https://travis-ci.com/adafruit/Adafruit_CircuitPython_ICM20649
+.. image:: https://github.com/adafruit/Adafruit_CircuitPython_ICM20649/workflows/Build%20CI/badge.svg
+    :target: https://github.com/adafruit/Adafruit_CircuitPython_ICM20649/actions
     :alt: Build Status
 
 Library for the ST ICM-20649 Wide-Range 6-DoF Accelerometer and Gyro
