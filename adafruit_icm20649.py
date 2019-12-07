@@ -23,7 +23,7 @@
 `adafruit_icm20649`
 ================================================================================
 
-Library for the ST ICM-20649 Wide-Range 6-DoF Accelerometer and Gyro
+Library for the ST ICM20649 Wide-Range 6-DoF Accelerometer and Gyro
 
 * Author(s): Bryan Siepert
 
@@ -32,12 +32,12 @@ Implementation Notes
 
 **Hardware:**
 
-   inline format: "* `Link Text <url>`_"
+* Adafruit's ICM20649 Breakout: https://adafruit.com/product/4464
 
 **Software and Dependencies:**
 
 * Adafruit CircuitPython firmware for the supported boards:
-  https://github.com/adafruit/circuitpython/releases
+  https://circuitpython.org/downloads
 
 
 * Adafruit's Bus Device library: https://github.com/adafruit/Adafruit_CircuitPython_BusDevice
@@ -98,7 +98,7 @@ class CV:
 
 
 class AccelRange(CV):
-    """Options for `accelerometer_range`"""
+    """Options for ``accelerometer_range``"""
     pass #pylint: disable=unnecessary-pass
 
 AccelRange.add_values((
@@ -109,7 +109,7 @@ AccelRange.add_values((
 ))
 
 class GyroRange(CV):
-    """Options for `gyro_data_range`"""
+    """Options for ``gyro_data_range``"""
     pass #pylint: disable=unnecessary-pass
 
 GyroRange.add_values((
@@ -120,7 +120,7 @@ GyroRange.add_values((
 ))
 
 
-class ICM20649:
+class ICM20649: #pylint:disable=too-many-instance-attributes
     """Library for the ST ICM-20649 Wide-Range 6-DoF Accelerometer and Gyro.
 
         :param ~busio.I2C i2c_bus: The I2C bus the ICM20649 is connected to.
@@ -151,9 +151,7 @@ class ICM20649:
 
     def __init__(self, i2c_bus, address=_ICM20649_DEFAULT_ADDRESS):
         self.i2c_device = i2c_device.I2CDevice(i2c_bus, address)
-
         if self._device_id != _ICM20649_DEVICE_ID:
-            print("found device id: ", self._device_id)
             raise RuntimeError("Failed to find ICM20649 - check your wiring!")
         self.reset()
 
@@ -184,15 +182,14 @@ class ICM20649:
         self._bank = 0
 
     def reset(self):
-        """Perform a soft-reset on the sensor"""
+        """Resets the internal registers and restores the default settings"""
         self._reset = True
         while self._reset:
             sleep(0.001)
 
-
     @property
     def acceleration(self):
-        """Acceleration!"""
+        """The x, y, z acceleration values returned in a 3-tuple and are in m / s ^ 2."""
         raw_accel_data = self._raw_accel_data
 
         x = self._scale_xl_data(raw_accel_data[0])
@@ -203,7 +200,7 @@ class ICM20649:
 
     @property
     def gyro(self):
-        """ME GRYO, ME FLY PLANE"""
+        """The x, y, z angular velocity values returned in a 3-tuple and are in degrees / second"""
         raw_gyro_data = self._raw_gyro_data
         x = self._scale_gyro_data(raw_gyro_data[0])
         y = self._scale_gyro_data(raw_gyro_data[1])
@@ -234,7 +231,7 @@ class ICM20649:
 
     @property
     def gyro_range(self):
-        """Adjusts the range of values that the sensor can measure, from 250 Degrees/second to 2000
+        """Adjusts the range of values that the sensor can measure, from 500 Degrees/second to 4000
         degrees/s. Note that larger ranges will be less accurate. Must be a `GyroRange`"""
         return self._cached_gyro_range
 
@@ -250,31 +247,90 @@ class ICM20649:
         sleep(.100) # needed to let new range settle
 
     @property
-    def accelerometer_data_rate(self):
-        """The rate at which the accelerometer takes measurements"""
+    def accelerometer_data_rate_divisor(self):
+        """The divisor for the rate at which accelerometer measurements are taken in Hz
+
+        Note: The data rates are set indirectly by setting a rate divisor according to the
+        following formula: ``accelerometer_data_rate = 1125/(1+divisor)``
+
+        This function sets the raw rate divisor.
+"""
         self._bank = 2
         raw_rate_divisor = self._accel_rate_divisor
         self._bank = 0
         #rate_hz = 1125/(1+raw_rate_divisor)
         return raw_rate_divisor
 
-    @accelerometer_data_rate.setter
-    def accelerometer_data_rate(self, value):
+    @accelerometer_data_rate_divisor.setter
+    def accelerometer_data_rate_divisor(self, value):
+        # check that value <= 4095
         self._bank = 2
         self._accel_rate_divisor = value
         self._bank = 0
 
     @property
-    def gyro_data_rate(self):
-        """The rate at which the gyro takes measurements"""
+    def gyro_data_rate_divisor(self):
+        """The divisor for the rate at which gyro measurements are taken in Hz
+
+        Note: The data rates are set indirectly by setting a rate divisor according to the
+        following formula: ``gyro_data_rate = 1100/(1+divisor)``
+
+        This function sets the raw rate divisor.
+        """
+
         self._bank = 2
         raw_rate_divisor = self._gyro_rate_divisor
         self._bank = 0
         # rate_hz = 1100/(1+raw_rate_divisor)
         return raw_rate_divisor
 
-    @gyro_data_rate.setter
-    def gyro_data_rate(self, value):
+    @gyro_data_rate_divisor.setter
+    def gyro_data_rate_divisor(self, value):
+        # check that value <= 255
         self._bank = 2
         self._gyro_rate_divisor = value
         self._bank = 0
+
+    def _accel_rate_calc(self, divisor):#pylint:disable=no-self-use
+        return 1125/(1+divisor)
+
+    def _gyro_rate_calc(self, divisor):#pylint:disable=no-self-use
+        return 1100/(1+divisor)
+
+    @property
+    def accelerometer_data_rate(self):
+        """The rate at which accelerometer measurements are taken in Hz
+
+        Note: The data rates are set indirectly by setting a rate divisor according to the
+        following formula: ``accelerometer_data_rate = 1125/(1+divisor)``
+
+        This function does the math to find the divisor from a given rate but it will not be
+        exactly as specified.
+        """
+        return self._accel_rate_calc(self.accelerometer_data_rate_divisor)
+
+    @accelerometer_data_rate.setter
+    def accelerometer_data_rate(self, value):
+        if value < self._accel_rate_calc(4095) or value > self._accel_rate_calc(0):
+            raise AttributeError("Accelerometer data rate must be between 0.27 and 1125.0")
+        self.accelerometer_data_rate_divisor = value
+
+    @property
+    def gyro_data_rate(self):
+        """The rate at which gyro measurements are taken in Hz
+
+        Note: The data rates are set indirectly by setting a rate divisor according to the
+        following formula: ``gyro_data_rate = 1100/(1+divisor)``
+
+        This function does the math to find the divisor from a given rate but it will not
+        be exactly as specified.
+        """
+        return self._gyro_rate_calc(self.gyro_data_rate_divisor)
+
+    @gyro_data_rate.setter
+    def gyro_data_rate(self, value):
+        if value < self._gyro_rate_calc(4095) or value > self._gyro_rate_calc(0):
+            raise AttributeError("Gyro data rate must be between 4.30 and 1100.0")
+
+        divisor = round(((1125.0-value)/ value))
+        self.gyro_data_rate_divisor = divisor
