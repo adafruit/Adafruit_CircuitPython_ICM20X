@@ -20,10 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 """
-`adafruit_icm20649`
+`adafruit_icm20x`
 ================================================================================
 
-Library for the ST ICM20649 Wide-Range 6-DoF Accelerometer and Gyro
+Library for the ST ICM20X Motion Sensor Family
 
 * Author(s): Bryan Siepert
 
@@ -33,6 +33,7 @@ Implementation Notes
 **Hardware:**
 
 * Adafruit's ICM20649 Breakout: https://adafruit.com/product/4464
+* Adafruit's ICM20948 Breakout: https://adafruit.com/product/4554
 
 **Software and Dependencies:**
 
@@ -175,8 +176,8 @@ class ICM20X: #pylint:disable=too-many-instance-attributes
 
     def __init__(self, i2c_bus, address=_ICM20649_DEFAULT_ADDRESS):
         self.i2c_device = i2c_device.I2CDevice(i2c_bus, address)
-        if self._device_id != _ICM20649_DEVICE_ID:
-            raise RuntimeError("Failed to find ICM20649 - check your wiring!")
+        if not self._device_id in [_ICM20649_DEVICE_ID, _ICM20948_DEVICE_ID]:
+            raise RuntimeError("Failed to find an ICM20X sensor - check your wiring!")
         self.reset()
 
         self._bank = 0
@@ -361,4 +362,17 @@ class ICM20X: #pylint:disable=too-many-instance-attributes
         self.gyro_data_rate_divisor = divisor
 
 class ICM20649(ICM20X):
-    pass
+    """Library for the ST ICM-20649 Wide-Range 6-DoF Accelerometer and Gyro.
+
+        :param ~busio.I2C i2c_bus: The I2C bus the ICM20649 is connected to.
+        :param address: The I2C slave address of the sensor
+
+    """
+
+
+class ICM20948(ICM20X):
+    """Library for the ST ICM-20948 Wide-Range 6-DoF Accelerometer and Gyro.
+
+        :param ~busio.I2C i2c_bus: The I2C bus the ICM20948 is connected to.
+        :param address: The I2C slave address of the sensor
+    """
