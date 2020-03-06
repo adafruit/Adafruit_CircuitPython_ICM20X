@@ -54,16 +54,26 @@ from adafruit_register.i2c_struct import UnaryStruct, ROUnaryStruct, Struct
 from adafruit_register.i2c_bit import RWBit
 from adafruit_register.i2c_bits import RWBits
 
-# pylint: disable=bad-whitespace
-_ICM20649_DEFAULT_ADDRESS = 0x68  # icm20649 default i2c address
-_ICM20649_DEVICE_ID = 0xE1  # Correct context of WHO_AM_I register
+#pylint: disable=bad-whitespace
+_ICM20649_DEFAULT_ADDRESS = 0x68 #icm20649 default i2c address
+_ICM20948_DEFAULT_ADDRESS = 0x69 #icm20649 default i2c address
+_ICM20649_DEVICE_ID = 0xE1 # Correct content of WHO_AM_I register
+_ICM20948_DEVICE_ID = 0xEA # Correct content of WHO_AM_I register
+
 
 # Bank 0
 _ICM20649_WHO_AM_I = 0x00  # device_id register
-_ICM20649_REG_BANK_SEL = 0x7F  # register bank selection register
-_ICM20649_PWR_MGMT_1 = 0x06  # primary power management register
-_ICM20649_ACCEL_XOUT_H = 0x2D  # first byte of accel data
-_ICM20649_GYRO_XOUT_H = 0x33  # first byte of accel data
+_ICM20649_REG_BANK_SEL = 0x7F # register bank selection register
+_ICM20649_PWR_MGMT_1  = 0x06 #primary power management register
+_ICM20649_ACCEL_XOUT_H = 0x2D # first byte of accel data
+_ICM20649_GYRO_XOUT_H = 0x33 # first byte of accel data
+_ICM20649_I2C_MST_STATUS = 0x17 # I2C Master Status bits
+
+_ICM20X_USER_CTRL = 0x03 # User Control Reg. Includes I2C Master
+_ICM20X_LP_CONFIG = 0x05 # Low Power config
+_ICM20X_REG_INT_PIN_CFG = 0xF   # Interrupt config register
+_ICM20X_REG_INT_ENABLE_0 = 0x10 # Interrupt enable register 0
+_ICM20X_REG_INT_ENABLE_1 = 0x11 # Interrupt enable register 1
 
 # Bank 2
 _ICM20649_GYRO_SMPLRT_DIV = 0x00
@@ -72,6 +82,22 @@ _ICM20649_ACCEL_SMPLRT_DIV_1 = 0x10
 _ICM20649_ACCEL_SMPLRT_DIV_2 = 0x11
 _ICM20649_ACCEL_CONFIG_1 = 0x14
 
+# Bank 3
+_ICM20X_I2C_MST_ODR_CONFIG = 0x0 # Sets ODR for I2C master bus
+_ICM20X_I2C_MST_CTRL = 0x1 # I2C master bus config
+_ICM20X_I2C_MST_DELAY_CTRL = 0x2 # I2C master bus config
+_ICM20X_I2C_SLV0_ADDR = 0x3 # Sets I2C address for I2C master bus slave 0
+_ICM20X_I2C_SLV0_REG  = 0x4 # Sets register address for I2C master bus slave 0
+_ICM20X_I2C_SLV0_CTRL = 0x5 # Controls for I2C master bus slave 0
+_ICM20X_I2C_SLV0_DO = 0x6   # Sets I2C master bus slave 0 data out
+
+_ICM20X_I2C_SLV4_ADDR = 0x13 # Sets I2C address for I2C master bus slave 4
+_ICM20X_I2C_SLV4_REG  = 0x14 # Sets register address for I2C master bus slave 4
+_ICM20X_I2C_SLV4_CTRL = 0x15 # Controls for I2C master bus slave 4
+_ICM20X_I2C_SLV4_DO = 0x16   # Sets I2C master bus slave 4 data out
+_ICM20X_I2C_SLV4_DI = 0x17   # Sets I2C master bus slave 4 data in
+
+_ICM20X_UT_PER_LSB = 0.15 # mag data LSB value (fixed)
 
 G_TO_ACCEL = 9.80665
 # pylint: enable=bad-whitespace
@@ -118,17 +144,7 @@ class GyroRange(CV):
     pass  # pylint: disable=unnecessary-pass
 
 
-GyroRange.add_values(
-    (
-        ("RANGE_500_DPS", 0, 500, 65.5),
-        ("RANGE_1000_DPS", 1, 1000, 32.8),
-        ("RANGE_2000_DPS", 2, 2000, 16.4),
-        ("RANGE_4000_DPS", 3, 4000, 8.2),
-    )
-)
-
-
-class ICM20649:  # pylint:disable=too-many-instance-attributes
+class ICM20X: #pylint:disable=too-many-instance-attributes
     """Library for the ST ICM-20649 Wide-Range 6-DoF Accelerometer and Gyro.
 
         :param ~busio.I2C i2c_bus: The I2C bus the ICM20649 is connected to.
@@ -343,3 +359,6 @@ class ICM20649:  # pylint:disable=too-many-instance-attributes
 
         divisor = round(((1125.0 - value) / value))
         self.gyro_data_rate_divisor = divisor
+
+class ICM20649(ICM20X):
+    pass
