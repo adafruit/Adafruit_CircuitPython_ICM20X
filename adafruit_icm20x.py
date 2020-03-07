@@ -126,23 +126,9 @@ class CV:
 class AccelRange(CV):
     """Options for ``accelerometer_range``"""
 
-    pass  # pylint: disable=unnecessary-pass
-
-
-AccelRange.add_values(
-    (
-        ("RANGE_4G", 0, 4, 8192),
-        ("RANGE_8G", 1, 8, 4096.0),
-        ("RANGE_16G", 2, 16, 2048),
-        ("RANGE_30G", 3, 30, 1024),
-    )
-)
-
 
 class GyroRange(CV):
     """Options for ``gyro_data_range``"""
-
-    pass  # pylint: disable=unnecessary-pass
 
 
 class ICM20X: #pylint:disable=too-many-instance-attributes
@@ -174,8 +160,10 @@ class ICM20X: #pylint:disable=too-many-instance-attributes
 
     _gyro_rate_divisor = UnaryStruct(_ICM20649_GYRO_SMPLRT_DIV, ">B")
 
-    def __init__(self, i2c_bus, address=_ICM20649_DEFAULT_ADDRESS):
+    def __init__(self, i2c_bus, address):
+
         self.i2c_device = i2c_device.I2CDevice(i2c_bus, address)
+        self._bank = 0
         if not self._device_id in [_ICM20649_DEVICE_ID, _ICM20948_DEVICE_ID]:
             raise RuntimeError("Failed to find an ICM20X sensor - check your wiring!")
         self.reset()
@@ -189,6 +177,7 @@ class ICM20X: #pylint:disable=too-many-instance-attributes
 
         # TODO: CV-ify
         self._accel_dlpf_config = 3
+<<<<<<< HEAD
 
         # 1.125 kHz/(1+ACCEL_SMPLRT_DIV[11:0]),
         # 1125Hz/(1+20) = 53.57Hz
@@ -196,14 +185,15 @@ class ICM20X: #pylint:disable=too-many-instance-attributes
 
         # writeByte(ICM20649_ADDR,GYRO_CONFIG_1, gyroConfig);
         self._gyro_range = GyroRange.RANGE_500_DPS  # pylint: disable=no-member
+=======
+        self._accel_rate_divisor = 20
+
+        self._gyro_range = GyroRange.RANGE_500_DPS #pylint: disable=no-member
+>>>>>>> ranges scaling correctly
         sleep(0.100)
         self._cached_gyro_range = self._gyro_range
 
-        # //ORD = 1100Hz/(1+10) = 100Hz
-        self._gyro_rate_divisor = 0x0A
-
-        # //reset to register bank 0
-        self._bank = 0
+        self._gyro_rate_divisor = 10
 
     def reset(self):
         """Resets the internal registers and restores the default settings"""
@@ -214,6 +204,7 @@ class ICM20X: #pylint:disable=too-many-instance-attributes
     @property
     def acceleration(self):
         """The x, y, z acceleration values returned in a 3-tuple and are in m / s ^ 2."""
+        self._bank = 0
         raw_accel_data = self._raw_accel_data
 
         x = self._scale_xl_data(raw_accel_data[0])
@@ -225,6 +216,7 @@ class ICM20X: #pylint:disable=too-many-instance-attributes
     @property
     def gyro(self):
         """The x, y, z angular velocity values returned in a 3-tuple and are in degrees / second"""
+        self._bank = 0
         raw_gyro_data = self._raw_gyro_data
         x = self._scale_gyro_data(raw_gyro_data[0])
         y = self._scale_gyro_data(raw_gyro_data[1])
@@ -368,6 +360,22 @@ class ICM20649(ICM20X):
         :param address: The I2C slave address of the sensor
 
     """
+    def __init__(self, i2c_bus, address=_ICM20649_DEFAULT_ADDRESS):
+
+        AccelRange.add_values((
+            ('RANGE_4G', 0, 4, 8192),
+            ('RANGE_8G', 1, 8, 4096.0),
+            ('RANGE_16G', 2, 16, 2048),
+            ('RANGE_30G', 3, 30, 1024),
+        ))
+
+        GyroRange.add_values((
+            ('RANGE_500_DPS', 0, 500, 65.5),
+            ('RANGE_1000_DPS', 1, 1000, 32.8),
+            ('RANGE_2000_DPS', 2, 2000, 16.4),
+            ('RANGE_4000_DPS', 3, 4000, 8.2)
+        ))
+        super().__init__(i2c_bus, address)
 
 
 class ICM20948(ICM20X):
@@ -376,3 +384,18 @@ class ICM20948(ICM20X):
         :param ~busio.I2C i2c_bus: The I2C bus the ICM20948 is connected to.
         :param address: The I2C slave address of the sensor
     """
+    def __init__(self, i2c_bus, address=_ICM20948_DEFAULT_ADDRESS):
+        print("948, mos defs")
+        AccelRange.add_values((
+            ('RANGE_2G', 0, 2, 16384),
+            ('RANGE_4G', 1, 4, 8192),
+            ('RANGE_8G', 2, 8, 4096.0),
+            ('RANGE_16G', 3, 16, 2048)
+        ))
+        GyroRange.add_values((
+            ('RANGE_250_DPS', 0, 250, 131.0),
+            ('RANGE_500_DPS', 1, 500, 65.5),
+            ('RANGE_1000_DPS', 2, 1000, 32.8),
+            ('RANGE_2000_DPS', 3, 2000, 16.4)
+        ))
+        super().__init__(i2c_bus, address)
