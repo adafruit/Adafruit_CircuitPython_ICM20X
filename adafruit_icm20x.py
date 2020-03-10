@@ -105,6 +105,7 @@ _ICM20X_I2C_SLV4_DO = 0x16   # Sets I2C master bus slave 4 data out
 _ICM20X_I2C_SLV4_DI = 0x17   # Sets I2C master bus slave 4 data in
 
 _ICM20X_UT_PER_LSB = 0.15 # mag data LSB value (fixed)
+_ICM20X_RAD_PER_DEG = 0.017453293 # Degrees/s to rad/s multiplier
 
 G_TO_ACCEL = 9.80665
 # pylint: enable=bad-whitespace
@@ -220,6 +221,25 @@ class ICM20X: #pylint:disable=too-many-instance-attributes
 
         #self._gyro_rate_divisor = 10
 
+        ##################
+
+        # self.accelerometer_range = AccelRange.RANGE_8G #pylint: disable=no-member
+        # self.gyro_range = GyroRange.RANGE_500_DPS #pylint: disable=no-member
+
+        # self.accelerometer_data_rate_divisor = 20 # ~53.57Hz
+        # self.gyro_data_rate_divisor = 10 # ~100Hz
+
+        # sleep(0.100)
+        # #TODO: CV-ify
+        # self._bank = 2
+        # self._accel_dlpf_config = 3
+
+
+
+        # # //reset to register bank 0
+        # self._bank = 0
+        ################################
+
     def reset(self):
         """Resets the internal registers and restores the default settings"""
         self._bank = 0
@@ -255,7 +275,7 @@ class ICM20X: #pylint:disable=too-many-instance-attributes
         return raw_measurement / AccelRange.lsb[self._cached_accel_range] * G_TO_ACCEL
 
     def _scale_gyro_data(self, raw_measurement):
-        return raw_measurement / GyroRange.lsb[self._cached_gyro_range]
+        return (raw_measurement / GyroRange.lsb[self._cached_gyro_range]) * _ICM20X_RAD_PER_DEG
 
     @property
     def accelerometer_range(self):
@@ -411,54 +431,11 @@ class ICM20948(ICM20X):
         :param ~busio.I2C i2c_bus: The I2C bus the ICM20948 is connected to.
         :param address: The I2C slave address of the sensor
     """
-    def __init__(self, i2c_bus, address=_ICM20948_DEFAULT_ADDRESS):
-        print("948, mos defs")
-        AccelRange.add_values((
-            ('RANGE_2G', 0, 2, 16384),
-            ('RANGE_4G', 1, 4, 8192),
-            ('RANGE_8G', 2, 8, 4096.0),
-            ('RANGE_16G', 3, 16, 2048)
-        ))
-        GyroRange.add_values((
-            ('RANGE_250_DPS', 0, 250, 131.0),
-            ('RANGE_500_DPS', 1, 500, 65.5),
-            ('RANGE_1000_DPS', 2, 1000, 32.8),
-            ('RANGE_2000_DPS', 3, 2000, 16.4)
-        ))
-        print("\tCALLING BASE INIT")
-        super().__init__(i2c_bus, address)
-        print("\tMAG INIT")
-        self._magnetometer_init()
-    @property
-    def magnetic(self):
-        """The current magnetic field strengths onthe X, Y, and Z axes in uT (micro-teslas)"""
-
-        self._bank = 0
-        full_data = self._all_data
-
-
-        x = full_data[8] * 0.15
-        y = full_data[9] * 0.15
-        z = full_data[10] * 0.15
-
-        # x = full_data[13:15] * 0.15
-        # y = full_data[15:17] * 0.15
-        # z = full_data[17:19] * 0.15
-
-        return(x, y, z)
-
-
-    # Bank 3
-    # _ICM20X_I2C_MST_ODR_CONFIG = 0x0 # Sets ODR for I2C master bus
-    # _ICM20X_I2C_MST_CTRL = 0x1 # I2C master bus config
-    # _ICM20X_I2C_MST_DELAY_CTRL = 0x2 # I2C master bus config
 
     _slave_finished = ROBit(_ICM20649_I2C_MST_STATUS, 6)
 
-    _raw_mag_data = Struct(_ICM20948_EXT_SLV_SENS_DATA_00, ">hhhh")
+    _raw_mag_data = Struct(_ICM20948_EXT_SLV_SENS_DATA_00, "<hhhh")
 
-
-    _all_data = Struct(_ICM20649_ACCEL_XOUT_H, ">hhhhhhhhhhh")
     _bypass_i2c_master = RWBit(_ICM20X_REG_INT_PIN_CFG, 1)
     _i2c_master_duty_cycle_en = RWBit(_ICM20X_LP_CONFIG, 6)
     _i2c_master_control = UnaryStruct(_ICM20X_I2C_MST_CTRL, ">B")
@@ -476,41 +453,55 @@ class ICM20948(ICM20X):
     _slave4_ctrl = UnaryStruct(_ICM20X_I2C_SLV4_CTRL, ">B")
     _slave4_do = UnaryStruct(_ICM20X_I2C_SLV4_DO, ">B")
     _slave4_di = UnaryStruct(_ICM20X_I2C_SLV4_DI, ">B")
-    # _i2c_master_enable  = RWBit(_ICM20X_I2C_MST_CTRL, )
+
+    def __init__(self, i2c_bus, address=_ICM20948_DEFAULT_ADDRESS):
+        AccelRange.add_values((
+            ('RANGE_2G', 0, 2, 16384),
+            ('RANGE_4G', 1, 4, 8192),
+            ('RANGE_8G', 2, 8, 4096.0),
+            ('RANGE_16G', 3, 16, 2048)
+        ))
+        GyroRange.add_values((
+            ('RANGE_250_DPS', 0, 250, 131.0),
+            ('RANGE_500_DPS', 1, 500, 65.5),
+            ('RANGE_1000_DPS', 2, 1000, 32.8),
+            ('RANGE_2000_DPS', 3, 2000, 16.4)
+        ))
+        super().__init__(i2c_bus, address)
+        self._magnetometer_init()
     def _magnetometer_init(self):
-        # set all the other enabling bits for the master bus
-        # wake up the mag by setting its data rate?
-        # set up reads by configuring slave0
 
         self._bank = 0
-
         self._bypass_i2c_master = False
-        self._bank = 3
+
         # no repeated start, i2c master clock = 345.60kHz
+        self._bank = 3
         self._i2c_master_control = 0x17
 
         self._bank = 0
         self._i2c_master_enable = True
 
-
-        # mag_chip_id = self._read_mag_register(0x01)
-        # print("MAG ID: ", mag_chip_id)
-
-        # print("Resetting I2C master")
-        # self._reset_i2c_master()
-        # sleep(1)
-        # print("Trying to soft reset the mag")
-        # self._soft_reset_mag()
-        # sleep(1)
-        print("Setting mag data rate")
+        # set the magnetometer data rate
         self._write_mag_register(0x31, 0x08)
-        # print("checking setup")
-        # rate = self._read_mag_register(0x31)
-        print("Setting up Slave 0 for reading from mag")
+
+        # set up slave0 for reading into the bank 0 data registers
         self._bank = 3
         self._slave0_addr = 0x8C
-        self._slave0_reg = 0x10
+        self._slave0_reg = 0x11
         self._slave0_ctrl = 0x89 # enable
+
+    @property
+    def magnetic(self):
+        """The current magnetic field strengths onthe X, Y, and Z axes in uT (micro-teslas)"""
+
+        self._bank = 0
+        full_data = self._raw_mag_data
+
+        x = full_data[0] * 0.15
+        y = full_data[1] * 0.15
+        z = full_data[2] * 0.15
+
+        return(x, y, z)
 
     def _read_mag_register(self, register_addr, slave_addr=0x0C):
         self._bank = 3
@@ -538,14 +529,9 @@ class ICM20948(ICM20X):
             sleep(0.010)
 
 
-    def _reset_i2c_master(self):
-        self._bank = 0
-        self._i2c_master_reset = True
-        while self._i2c_master_reset:
-            sleep(0.010)
 
-    def _soft_reset_mag(self):
 
-        self._write_mag_register(0x32, 0x01)
-        while self._read_mag_register(0x32):
-            sleep(0.010)
+
+
+
+
