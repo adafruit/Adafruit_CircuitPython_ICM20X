@@ -69,6 +69,7 @@ _ICM20649_PWR_MGMT_1  = 0x06 #primary power management register
 _ICM20649_ACCEL_XOUT_H = 0x2D # first byte of accel data
 _ICM20649_GYRO_XOUT_H = 0x33 # first byte of accel data
 _ICM20649_I2C_MST_STATUS = 0x17 # I2C Master Status bits
+_ICM20948_EXT_SLV_SENS_DATA_00 = 0x3B
 
 _ICM20X_USER_CTRL = 0x03 # User Control Reg. Includes I2C Master
 _ICM20X_LP_CONFIG = 0x05 # Low Power config
@@ -81,7 +82,12 @@ _ICM20649_GYRO_SMPLRT_DIV = 0x00
 _ICM20649_GYRO_CONFIG_1 = 0x01
 _ICM20649_ACCEL_SMPLRT_DIV_1 = 0x10
 _ICM20649_ACCEL_SMPLRT_DIV_2 = 0x11
+<<<<<<< HEAD
 _ICM20649_ACCEL_CONFIG_1 = 0x14
+=======
+_ICM20649_ACCEL_CONFIG_1     = 0x14
+# _ICM20649_ACCEL_CONFIG_2    = 0x15
+>>>>>>> working!
 
 # Bank 3
 _ICM20X_I2C_MST_ODR_CONFIG = 0x0 # Sets ODR for I2C master bus
@@ -150,8 +156,13 @@ class ICM20X: #pylint:disable=too-many-instance-attributes
     _raw_accel_data = Struct(_ICM20649_ACCEL_XOUT_H, ">hhh")
     _raw_gyro_data = Struct(_ICM20649_GYRO_XOUT_H, ">hhh")
 
+    _i2c_master_duty_cycle_en = RWBit(_ICM20X_LP_CONFIG, 6)
+
+
     # Bank 2
     _gyro_range = RWBits(2, _ICM20649_GYRO_CONFIG_1, 1)
+    _accel_config = Struct(_ICM20649_ACCEL_CONFIG_1, ">B")
+    _gyro_config1 = Struct(_ICM20649_GYRO_CONFIG_1, ">B")
     _accel_dlpf_enable = RWBits(1, _ICM20649_ACCEL_CONFIG_1, 0)
     _accel_range = RWBits(2, _ICM20649_ACCEL_CONFIG_1, 1)
     _accel_dlpf_config = RWBits(3, _ICM20649_ACCEL_CONFIG_1, 3)
@@ -176,19 +187,38 @@ class ICM20X: #pylint:disable=too-many-instance-attributes
         self._bank = 0
         self._sleep = False
 
+        self._i2c_master_duty_cycle_en = True
+
+        # WRITE 0b00111001 to ACCEL_CONFIG
+        # WRITE 0b00111001 to GYRO_CONFIG_1
+        # WRITE 0b00111000 to ACCEL_CONFIG
+        # WRITE 0b00111000 to GYRO_CONFIG_1
         self._bank = 2
-        self._accel_range = AccelRange.RANGE_8G  # pylint: disable=no-member
-        self._cached_accel_range = self._accel_range
+        # WRITE 0b00000001 to ACCEL_CONFIG
+        print("accel")
+        print("copying 1")
+        self._accel_config = [0b00000001]
+        self._gyro_config1 =[0b00000001]
+        print("copying 2")
+        self._accel_config = [0b00111001]
+        self._gyro_config1 = [0b00111001]
+        print("copying 3")
+        self._accel_config = [0b00111000]
+        self._gyro_config1 = [0b00111000]
+        print("done copying, onto set range")
 
-        # TODO: CV-ify
-        self._accel_dlpf_config = 3
-        self._accel_rate_divisor = 20
+        #self._accel_range = AccelRange.RANGE_8G #pylint: disable=no-member
+        self._cached_accel_range = 0
 
-        self._gyro_range = GyroRange.RANGE_500_DPS #pylint: disable=no-member
+        #TODO: CV-ify
+        #self._accel_dlpf_config = 3
+        #self._accel_rate_divisor = 20
+
+        #self._gyro_range = GyroRange.RANGE_500_DPS #pylint: disable=no-member
         sleep(0.100)
-        self._cached_gyro_range = self._gyro_range
+        self._cached_gyro_range = 0
 
-        self._gyro_rate_divisor = 10
+        #self._gyro_rate_divisor = 10
 
     def reset(self):
         """Resets the internal registers and restores the default settings"""
@@ -267,7 +297,7 @@ class ICM20X: #pylint:disable=too-many-instance-attributes
         following formula: ``accelerometer_data_rate = 1125/(1+divisor)``
 
         This function sets the raw rate divisor.
-"""
+        """
         self._bank = 2
         raw_rate_divisor = self._accel_rate_divisor
         self._bank = 0
@@ -395,18 +425,40 @@ class ICM20948(ICM20X):
             ('RANGE_1000_DPS', 2, 1000, 32.8),
             ('RANGE_2000_DPS', 3, 2000, 16.4)
         ))
+        print("\tCALLING BASE INIT")
         super().__init__(i2c_bus, address)
-        #self._magnetometer_init()
+        print("\tMAG INIT")
+        self._magnetometer_init()
     @property
     def magnetic(self):
         """The current magnetic field strengths onthe X, Y, and Z axes in uT (micro-teslas)"""
-        return (0, 0, 0)
 
-# Bank 3
-# _ICM20X_I2C_MST_ODR_CONFIG = 0x0 # Sets ODR for I2C master bus
-# _ICM20X_I2C_MST_CTRL = 0x1 # I2C master bus config
-# _ICM20X_I2C_MST_DELAY_CTRL = 0x2 # I2C master bus config
+        self._bank = 0
+        full_data = self._all_data
 
+
+        x = full_data[8] * 0.15
+        y = full_data[9] * 0.15
+        z = full_data[10] * 0.15
+
+        # x = full_data[13:15] * 0.15
+        # y = full_data[15:17] * 0.15
+        # z = full_data[17:19] * 0.15
+
+        return(x, y, z)
+
+
+    # Bank 3
+    # _ICM20X_I2C_MST_ODR_CONFIG = 0x0 # Sets ODR for I2C master bus
+    # _ICM20X_I2C_MST_CTRL = 0x1 # I2C master bus config
+    # _ICM20X_I2C_MST_DELAY_CTRL = 0x2 # I2C master bus config
+
+    _slave_finished = ROBit(_ICM20649_I2C_MST_STATUS, 6)
+
+    _raw_mag_data = Struct(_ICM20948_EXT_SLV_SENS_DATA_00, ">hhhh")
+
+
+    _all_data = Struct(_ICM20649_ACCEL_XOUT_H, ">hhhhhhhhhhh")
     _bypass_i2c_master = RWBit(_ICM20X_REG_INT_PIN_CFG, 1)
     _i2c_master_duty_cycle_en = RWBit(_ICM20X_LP_CONFIG, 6)
     _i2c_master_control = UnaryStruct(_ICM20X_I2C_MST_CTRL, ">B")
@@ -424,7 +476,6 @@ class ICM20948(ICM20X):
     _slave4_ctrl = UnaryStruct(_ICM20X_I2C_SLV4_CTRL, ">B")
     _slave4_do = UnaryStruct(_ICM20X_I2C_SLV4_DO, ">B")
     _slave4_di = UnaryStruct(_ICM20X_I2C_SLV4_DI, ">B")
-    _slave4_finished = ROBit(_ICM20649_I2C_MST_STATUS, 6)
     # _i2c_master_enable  = RWBit(_ICM20X_I2C_MST_CTRL, )
     def _magnetometer_init(self):
         # set all the other enabling bits for the master bus
@@ -432,7 +483,7 @@ class ICM20948(ICM20X):
         # set up reads by configuring slave0
 
         self._bank = 0
-        self._i2c_master_duty_cycle_en = True
+
         self._bypass_i2c_master = False
         self._bank = 3
         # no repeated start, i2c master clock = 345.60kHz
@@ -445,42 +496,45 @@ class ICM20948(ICM20X):
         # mag_chip_id = self._read_mag_register(0x01)
         # print("MAG ID: ", mag_chip_id)
 
-        print("Resetting I2C master")
-        self._reset_i2c_master()
-
-        print("Trying to soft reset the mag")
-        self._soft_reset_mag()
-
+        # print("Resetting I2C master")
+        # self._reset_i2c_master()
+        # sleep(1)
+        # print("Trying to soft reset the mag")
+        # self._soft_reset_mag()
+        # sleep(1)
         print("Setting mag data rate")
         self._write_mag_register(0x31, 0x08)
-
+        # print("checking setup")
+        # rate = self._read_mag_register(0x31)
         print("Setting up Slave 0 for reading from mag")
         self._bank = 3
         self._slave0_addr = 0x8C
         self._slave0_reg = 0x10
         self._slave0_ctrl = 0x89 # enable
 
-
     def _read_mag_register(self, register_addr, slave_addr=0x0C):
+        self._bank = 3
+
         slave_addr |= 0x80 # set top bit for read
 
         self._slave4_addr = slave_addr
         self._slave4_reg = register_addr
         self._slave4_ctrl = 0x80 # enable
         self._bank = 0
-        while not self._slave4_finished:
+        while not self._slave_finished:
             sleep(0.010)
         self._bank = 3
-        return self._slave4_do
+        return self._slave4_di
 
     def _write_mag_register(self, register_addr, value, slave_addr=0x0C):
+        self._bank = 3
 
         self._slave4_addr = slave_addr
         self._slave4_reg = register_addr
-        self._slave4_di = value
+        self._slave4_do = value
         self._slave4_ctrl = 0x80 # enable
         self._bank = 0
-        while not self._slave4_finished:
+        while not self._slave_finished:
             sleep(0.010)
 
 
@@ -495,34 +549,3 @@ class ICM20948(ICM20X):
         self._write_mag_register(0x32, 0x01)
         while self._read_mag_register(0x32):
             sleep(0.010)
-
-
-# bool Adafruit_ICM20948::_write_ext_reg(uint8_t slv_addr, uint8_t reg_addr, uint8_t value, uint8_t num_tries) {
-
-#   uint8_t buffer[2];
-#   _setBank(3);
-#   uint8_t tries = 0;
-#   // set the I2C address on the external bus
-#   buffer[0] = ICM20948_I2C_SLV4_ADDR;
-#   buffer[1] = slv_addr;
-#   if (!i2c_dev->write(buffer, 2)) {
-#     return false;
-#   }
-#   // specify which register we're writing to
-#   buffer[0] = ICM20948_I2C_SLV4_REG;
-#   buffer[1] = reg_addr;
-#   if (!i2c_dev->write(buffer, 2)) {
-#     return false;
-#   }
-#   // set the data to write
-#   buffer[0] = ICM20948_I2C_SLV4_DO;
-#   buffer[1] = value;
-#   if (!i2c_dev->write(buffer, 2)) {
-#     return false;
-#   }
-#   // start writing
-#   buffer[0] = ICM20948_I2C_SLV4_CTRL;
-#   buffer[1] = 0x80;
-#   if (!i2c_dev->write(buffer, 2)) {
-#     return false;
-#   }
