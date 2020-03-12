@@ -54,27 +54,27 @@ from adafruit_register.i2c_struct import UnaryStruct, ROUnaryStruct, Struct
 from adafruit_register.i2c_bit import RWBit
 from adafruit_register.i2c_bits import RWBits
 
-#pylint: disable=bad-whitespace
-_ICM20649_DEFAULT_ADDRESS = 0x68 #icm20649 default i2c address
-_ICM20649_DEVICE_ID = 0xE1 # Correct context of WHO_AM_I register
+# pylint: disable=bad-whitespace
+_ICM20649_DEFAULT_ADDRESS = 0x68  # icm20649 default i2c address
+_ICM20649_DEVICE_ID = 0xE1  # Correct context of WHO_AM_I register
 
 # Bank 0
 _ICM20649_WHO_AM_I = 0x00  # device_id register
-_ICM20649_REG_BANK_SEL = 0x7F # register bank selection register
-_ICM20649_PWR_MGMT_1  = 0x06 #primary power management register
-_ICM20649_ACCEL_XOUT_H = 0x2D # first byte of accel data
-_ICM20649_GYRO_XOUT_H = 0x33 # first byte of accel data
+_ICM20649_REG_BANK_SEL = 0x7F  # register bank selection register
+_ICM20649_PWR_MGMT_1 = 0x06  # primary power management register
+_ICM20649_ACCEL_XOUT_H = 0x2D  # first byte of accel data
+_ICM20649_GYRO_XOUT_H = 0x33  # first byte of accel data
 
 # Bank 2
 _ICM20649_GYRO_SMPLRT_DIV = 0x00
-_ICM20649_GYRO_CONFIG_1     = 0x01
+_ICM20649_GYRO_CONFIG_1 = 0x01
 _ICM20649_ACCEL_SMPLRT_DIV_1 = 0x10
 _ICM20649_ACCEL_SMPLRT_DIV_2 = 0x11
-_ICM20649_ACCEL_CONFIG_1     = 0x14
+_ICM20649_ACCEL_CONFIG_1 = 0x14
 
 
-G_TO_ACCEL           = 9.80665
-#pylint: enable=bad-whitespace
+G_TO_ACCEL = 9.80665
+# pylint: enable=bad-whitespace
 class CV:
     """struct helper"""
 
@@ -96,31 +96,39 @@ class CV:
         return value in cls.string
 
 
-
 class AccelRange(CV):
     """Options for ``accelerometer_range``"""
-    pass #pylint: disable=unnecessary-pass
 
-AccelRange.add_values((
-    ('RANGE_4G', 0, 4, 8192),
-    ('RANGE_8G', 1, 8, 4096.0),
-    ('RANGE_16G', 2, 16, 2048),
-    ('RANGE_30G', 3, 30, 1024),
-))
+    pass  # pylint: disable=unnecessary-pass
+
+
+AccelRange.add_values(
+    (
+        ("RANGE_4G", 0, 4, 8192),
+        ("RANGE_8G", 1, 8, 4096.0),
+        ("RANGE_16G", 2, 16, 2048),
+        ("RANGE_30G", 3, 30, 1024),
+    )
+)
+
 
 class GyroRange(CV):
     """Options for ``gyro_data_range``"""
-    pass #pylint: disable=unnecessary-pass
 
-GyroRange.add_values((
-    ('RANGE_500_DPS', 0, 500, 65.5),
-    ('RANGE_1000_DPS', 1, 1000, 32.8),
-    ('RANGE_2000_DPS', 2, 2000, 16.4),
-    ('RANGE_4000_DPS', 3, 4000, 8.2)
-))
+    pass  # pylint: disable=unnecessary-pass
 
 
-class ICM20649: #pylint:disable=too-many-instance-attributes
+GyroRange.add_values(
+    (
+        ("RANGE_500_DPS", 0, 500, 65.5),
+        ("RANGE_1000_DPS", 1, 1000, 32.8),
+        ("RANGE_2000_DPS", 2, 2000, 16.4),
+        ("RANGE_4000_DPS", 3, 4000, 8.2),
+    )
+)
+
+
+class ICM20649:  # pylint:disable=too-many-instance-attributes
     """Library for the ST ICM-20649 Wide-Range 6-DoF Accelerometer and Gyro.
 
         :param ~busio.I2C i2c_bus: The I2C bus the ICM20649 is connected to.
@@ -159,19 +167,18 @@ class ICM20649: #pylint:disable=too-many-instance-attributes
         self._sleep = False
 
         self._bank = 2
-        self._accel_range = AccelRange.RANGE_8G #pylint: disable=no-member
+        self._accel_range = AccelRange.RANGE_8G  # pylint: disable=no-member
         self._cached_accel_range = self._accel_range
 
-        #TODO: CV-ify
+        # TODO: CV-ify
         self._accel_dlpf_config = 3
-
 
         # 1.125 kHz/(1+ACCEL_SMPLRT_DIV[11:0]),
         # 1125Hz/(1+20) = 53.57Hz
         self._accel_rate_divisor = 20
 
         # writeByte(ICM20649_ADDR,GYRO_CONFIG_1, gyroConfig);
-        self._gyro_range = GyroRange.RANGE_500_DPS #pylint: disable=no-member
+        self._gyro_range = GyroRange.RANGE_500_DPS  # pylint: disable=no-member
         sleep(0.100)
         self._cached_gyro_range = self._gyro_range
 
@@ -196,7 +203,7 @@ class ICM20649: #pylint:disable=too-many-instance-attributes
         y = self._scale_xl_data(raw_accel_data[1])
         z = self._scale_xl_data(raw_accel_data[2])
 
-        return(x, y, z)
+        return (x, y, z)
 
     @property
     def gyro(self):
@@ -221,7 +228,7 @@ class ICM20649: #pylint:disable=too-many-instance-attributes
         return self._cached_accel_range
 
     @accelerometer_range.setter
-    def accelerometer_range(self, value): #pylint: disable=no-member
+    def accelerometer_range(self, value):  # pylint: disable=no-member
         if not AccelRange.is_valid(value):
             raise AttributeError("range must be an `AccelRange`")
         self._bank = 2
@@ -244,7 +251,7 @@ class ICM20649: #pylint:disable=too-many-instance-attributes
         self._gyro_range = value
         self._cached_gyro_range = value
         self._bank = 0
-        sleep(.100) # needed to let new range settle
+        sleep(0.100)  # needed to let new range settle
 
     @property
     def accelerometer_data_rate_divisor(self):
@@ -258,7 +265,7 @@ class ICM20649: #pylint:disable=too-many-instance-attributes
         self._bank = 2
         raw_rate_divisor = self._accel_rate_divisor
         self._bank = 0
-        #rate_hz = 1125/(1+raw_rate_divisor)
+        # rate_hz = 1125/(1+raw_rate_divisor)
         return raw_rate_divisor
 
     @accelerometer_data_rate_divisor.setter
@@ -291,11 +298,11 @@ class ICM20649: #pylint:disable=too-many-instance-attributes
         self._gyro_rate_divisor = value
         self._bank = 0
 
-    def _accel_rate_calc(self, divisor):#pylint:disable=no-self-use
-        return 1125/(1+divisor)
+    def _accel_rate_calc(self, divisor):  # pylint:disable=no-self-use
+        return 1125 / (1 + divisor)
 
-    def _gyro_rate_calc(self, divisor):#pylint:disable=no-self-use
-        return 1100/(1+divisor)
+    def _gyro_rate_calc(self, divisor):  # pylint:disable=no-self-use
+        return 1100 / (1 + divisor)
 
     @property
     def accelerometer_data_rate(self):
@@ -312,7 +319,9 @@ class ICM20649: #pylint:disable=too-many-instance-attributes
     @accelerometer_data_rate.setter
     def accelerometer_data_rate(self, value):
         if value < self._accel_rate_calc(4095) or value > self._accel_rate_calc(0):
-            raise AttributeError("Accelerometer data rate must be between 0.27 and 1125.0")
+            raise AttributeError(
+                "Accelerometer data rate must be between 0.27 and 1125.0"
+            )
         self.accelerometer_data_rate_divisor = value
 
     @property
@@ -332,5 +341,5 @@ class ICM20649: #pylint:disable=too-many-instance-attributes
         if value < self._gyro_rate_calc(4095) or value > self._gyro_rate_calc(0):
             raise AttributeError("Gyro data rate must be between 4.30 and 1100.0")
 
-        divisor = round(((1125.0-value)/ value))
+        divisor = round(((1125.0 - value) / value))
         self.gyro_data_rate_divisor = divisor
