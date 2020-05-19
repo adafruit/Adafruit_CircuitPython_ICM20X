@@ -1,7 +1,7 @@
 import time
 import board
 import busio
-from adafruit_icm20649 import ICM20649, AccelRange, GyroRange
+from adafruit_icm20x import ICM20649, AccelRange, GyroRange
 
 
 def printNewMax(value, current_max, axis):
