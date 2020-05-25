@@ -82,36 +82,11 @@ _ICM20649_GYRO_SMPLRT_DIV = 0x00
 _ICM20649_GYRO_CONFIG_1 = 0x01
 _ICM20649_ACCEL_SMPLRT_DIV_1 = 0x10
 _ICM20649_ACCEL_SMPLRT_DIV_2 = 0x11
-<<<<<<< HEAD
-<<<<<<< HEAD
 _ICM20649_ACCEL_CONFIG_1 = 0x14
-=======
-_ICM20649_ACCEL_CONFIG_1     = 0x14
-=======
-_ICM20649_ACCEL_CONFIG_1 = 0x14
->>>>>>> fixing timing issues, formatting
-# _ICM20649_ACCEL_CONFIG_2    = 0x15
->>>>>>> working!
+
 
 # Bank 3
-<<<<<<< HEAD
-_ICM20X_I2C_MST_ODR_CONFIG = 0x0 # Sets ODR for I2C master bus
-_ICM20X_I2C_MST_CTRL = 0x1 # I2C master bus config
-_ICM20X_I2C_MST_DELAY_CTRL = 0x2 # I2C master bus config
-_ICM20X_I2C_SLV0_ADDR = 0x3 # Sets I2C address for I2C master bus slave 0
-_ICM20X_I2C_SLV0_REG  = 0x4 # Sets register address for I2C master bus slave 0
-_ICM20X_I2C_SLV0_CTRL = 0x5 # Controls for I2C master bus slave 0
-_ICM20X_I2C_SLV0_DO = 0x6   # Sets I2C master bus slave 0 data out
 
-_ICM20X_I2C_SLV4_ADDR = 0x13 # Sets I2C address for I2C master bus slave 4
-_ICM20X_I2C_SLV4_REG  = 0x14 # Sets register address for I2C master bus slave 4
-_ICM20X_I2C_SLV4_CTRL = 0x15 # Controls for I2C master bus slave 4
-_ICM20X_I2C_SLV4_DO = 0x16   # Sets I2C master bus slave 4 data out
-_ICM20X_I2C_SLV4_DI = 0x17   # Sets I2C master bus slave 4 data in
-
-_ICM20X_UT_PER_LSB = 0.15 # mag data LSB value (fixed)
-_ICM20X_RAD_PER_DEG = 0.017453293 # Degrees/s to rad/s multiplier
-=======
 _ICM20X_I2C_MST_ODR_CONFIG = 0x0  # Sets ODR for I2C master bus
 _ICM20X_I2C_MST_CTRL = 0x1  # I2C master bus config
 _ICM20X_I2C_MST_DELAY_CTRL = 0x2  # I2C master bus config
@@ -128,7 +103,6 @@ _ICM20X_I2C_SLV4_DI = 0x17  # Sets I2C master bus slave 4 data in
 
 _ICM20X_UT_PER_LSB = 0.15  # mag data LSB value (fixed)
 _ICM20X_RAD_PER_DEG = 0.017453293  # Degrees/s to rad/s multiplier
->>>>>>> fixing timing issues, formatting
 
 G_TO_ACCEL = 9.80665
 # pylint: enable=bad-whitespace
@@ -152,21 +126,12 @@ class CV:
         """Validate that a given value is a member"""
         return value in cls.string
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-=======
->>>>>>> almost there on mag, missing some bytes
-class AccelRange(CV):
-    """Options for ``accelerometer_range``"""
-=======
 
 class AccelRange(CV):
     """Options for ``accelerometer_range``"""
 
     pass  # pylint: disable=unnecessary-pass
 
->>>>>>> fixing timing issues, formatting
 
 class GyroRange(CV):
     """Options for ``gyro_data_range``"""
