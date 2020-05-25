@@ -192,7 +192,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     _raw_accel_data = Struct(_ICM20649_ACCEL_XOUT_H, ">hhh")
     _raw_gyro_data = Struct(_ICM20649_GYRO_XOUT_H, ">hhh")
 
-    _i2c_master_duty_cycle_en = RWBit(_ICM20X_LP_CONFIG, 6)
+    # _i2c_master_duty_cycle_en = RWBit(_ICM20X_LP_CONFIG, 6)
 
     # Bank 2
     _gyro_range = RWBits(2, _ICM20649_GYRO_CONFIG_1, 1)
@@ -208,7 +208,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
 
     @property
     def _bank(self):
-        return self._bank_reg
+        return self._bank_reg >> 4
 
     @_bank.setter
     def _bank(self, value):
@@ -221,38 +221,17 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         if not self._device_id in [_ICM20649_DEVICE_ID, _ICM20948_DEVICE_ID]:
             raise RuntimeError("Failed to find an ICM20X sensor - check your wiring!")
         self.reset()
+        self.initialize()
 
+    def initialize(self):
+        # TODO: method-ify
         self._bank = 0
         sleep(0.005)
         self._sleep = False
         sleep(0.005)
-
-        self._i2c_master_duty_cycle_en = True
+        # TODO: method-ify
+        # self._i2c_master_duty_cycle_en = True #WHY?
         sleep(0.005)
-
-        self._bank = 2
-        # WRITE 0b00000001 to ACCEL_CONFIG
-
-        # sleep(0.005)
-        # self._accel_config = [0b00111000]
-        # sleep(0.005)
-        # self._gyro_config1 = [0b00111000]
-        # sleep(0.005)
-
-        # self.accel_range = AccelRange.RANGE_8G  # pylint: disable=no-member
-        # self._cached_accel_range = 0
-
-        # TODO: CV-ify
-        # self._accel_dlpf_config = 3
-        # self._accel_rate_divisor = 20
-
-        # self._gyro_range = GyroRange.RANGE_500_DPS #pylint: disable=no-member
-        # sleep(0.100)
-        # self._cached_gyro_range = 0
-
-        # self._gyro_rate_divisor = 10
-
-        ##################
 
         self.accelerometer_range = AccelRange.RANGE_8G  # pylint: disable=no-member
         self.gyro_range = GyroRange.RANGE_500_DPS  # pylint: disable=no-member
@@ -260,60 +239,6 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         self.accelerometer_data_rate_divisor = 20  # ~53.57Hz
         self.gyro_data_rate_divisor = 10  # ~100Hz
 
-        # sleep(0.100)
-        # #TODO: CV-ify
-        # self._bank = 2
-        # self._accel_dlpf_config = 3
-
-        # # //reset to register bank 0
-        # self._bank = 0
-        ################################
-
-    # def _swreset(self):
-
-    #     self._i2c_master_duty_cycle_en = True
-
-    #     # set all registers to init/power up values
-    #     _ICM20649_WHO_AM_I = 0x00  # device_id register
-    #     _ICM20649_REG_BANK_SEL = 0x7F  # register bank selection register
-    #     _ICM20649_PWR_MGMT_1 = 0x06  # primary power management register
-    #     _ICM20649_ACCEL_XOUT_H = 0x2D  # first byte of accel data
-    #     _ICM20649_GYRO_XOUT_H = 0x33  # first byte of accel data
-    #     _ICM20649_I2C_MST_STATUS = 0x17  # I2C Master Status bits
-    #     _ICM20948_EXT_SLV_SENS_DATA_00 = 0x3B
-
-    #     _ICM20X_USER_CTRL = 0x03  # User Control Reg. Includes I2C Master
-    #     _ICM20X_LP_CONFIG = 0x05  # Low Power config
-    #     _ICM20X_REG_INT_PIN_CFG = 0xF  # Interrupt config register
-    #     _ICM20X_REG_INT_ENABLE_0 = 0x10  # Interrupt enable register 0
-    #     _ICM20X_REG_INT_ENABLE_1 = 0x11  # Interrupt enable register 1
-
-    #     # Bank 2
-    #     _ICM20649_GYRO_SMPLRT_DIV = 0x00
-    #     _ICM20649_GYRO_CONFIG_1 = 0x01
-    #     _ICM20649_ACCEL_SMPLRT_DIV_1 = 0x10
-    #     _ICM20649_ACCEL_SMPLRT_DIV_2 = 0x11
-    #     _ICM20649_ACCEL_CONFIG_1 = 0x14
-    #     # _ICM20649_ACCEL_CONFIG_2    = 0x15
-
-    #     # Bank 3
-    #     _ICM20X_I2C_MST_ODR_CONFIG = 0x0  # Sets ODR for I2C master bus
-    #     _ICM20X_I2C_MST_CTRL = 0x1  # I2C master bus config
-    #     _ICM20X_I2C_MST_DELAY_CTRL = 0x2  # I2C master bus config
-    #     _ICM20X_I2C_SLV0_ADDR = 0x3  # Sets I2C address for I2C master bus slave 0
-    #     _ICM20X_I2C_SLV0_REG = 0x4  # Sets register address for I2C master bus slave 0
-    #     _ICM20X_I2C_SLV0_CTRL = 0x5  # Controls for I2C master bus slave 0
-    #     _ICM20X_I2C_SLV0_DO = 0x6  # Sets I2C master bus slave 0 data out
-
-    #     _ICM20X_I2C_SLV4_ADDR = 0x13  # Sets I2C address for I2C master bus slave 4
-    #     _ICM20X_I2C_SLV4_REG = 0x14  # Sets register address for I2C master bus slave 4
-    #     _ICM20X_I2C_SLV4_CTRL = 0x15  # Controls for I2C master bus slave 4
-    #     _ICM20X_I2C_SLV4_DO = 0x16  # Sets I2C master bus slave 4 data out
-    #     _ICM20X_I2C_SLV4_DI = 0x17  # Sets I2C master bus slave 4 data in
-
-    #     _ICM20X_UT_PER_LSB = 0.15  # mag data LSB value (fixed)
-    #     _ICM20X_RAD_PER_DEG = 0.017453293  # Degrees/s to rad/s multiplier
-    #     pass
 
     def reset(self):
         """Resets the internal registers and restores the default settings"""
@@ -369,6 +294,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         if not AccelRange.is_valid(value):
             raise AttributeError("range must be an `AccelRange`")
         self._bank = 2
+        sleep(0.005)
         self._accel_range = value
         sleep(0.005)
         self._cached_accel_range = value
@@ -386,6 +312,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
             raise AttributeError("range must be a `GyroRange`")
 
         self._bank = 2
+        sleep(0.005)
         self._gyro_range = value
         sleep(0.005)
         self._cached_gyro_range = value
@@ -412,10 +339,10 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     def accelerometer_data_rate_divisor(self, value):
         # check that value <= 4095
         self._bank = 2
+        sleep(0.005)
         self._accel_rate_divisor = value
         sleep(0.005)
-        self._bank = 0
-
+\
     @property
     def gyro_data_rate_divisor(self):
         """The divisor for the rate at which gyro measurements are taken in Hz
@@ -437,10 +364,10 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     def gyro_data_rate_divisor(self, value):
         # check that value <= 255
         self._bank = 2
+        sleep(0.005)
         self._gyro_rate_divisor = value
         sleep(0.005)
-        self._bank = 0
-
+\
     def _accel_rate_calc(self, divisor):  # pylint:disable=no-self-use
         return 1125 / (1 + divisor)
 
@@ -532,8 +459,12 @@ class ICM20948(ICM20X):
     _bypass_i2c_master = RWBit(_ICM20X_REG_INT_PIN_CFG, 1)
     _i2c_master_duty_cycle_en = RWBit(_ICM20X_LP_CONFIG, 6)
     _i2c_master_control = UnaryStruct(_ICM20X_I2C_MST_CTRL, ">B")
-    _i2c_master_enable = RWBit(_ICM20X_USER_CTRL, 5)
-    _i2c_master_reset = RWBit(_ICM20X_USER_CTRL, 1)
+
+    _i2c_master_enable = RWBit(_ICM20X_USER_CTRL, 5) # TODO: use this in sw reset
+    # _i2c_slave_reset = RWBit(_ICM20X_USER_CTRL, 4)
+    # _dmp_reset = RWBit(_ICM20X_USER_CTRL, 3)
+    # _sram_reset = RWBit(_ICM20X_USER_CTRL, 2)
+    # _i2c_master_reset = RWBit(_ICM20X_USER_CTRL, 1)
 
     _slave0_addr = UnaryStruct(_ICM20X_I2C_SLV0_ADDR, ">B")
     _slave0_reg = UnaryStruct(_ICM20X_I2C_SLV0_REG, ">B")
@@ -570,21 +501,43 @@ class ICM20948(ICM20X):
     def _magnetometer_init(self):
 
         self._bank = 0
+        sleep(0.100)
         self._bypass_i2c_master = False
         sleep(0.005)
         # print("I2C Master bypassed:", self._bypass_i2c_master)
         # sleep(0.005)
 
+
+        # TODO: Determine why this does not work sometimes
         # no repeated start, i2c master clock = 345.60kHz
         self._bank = 3
+        sleep(0.100)
         self._i2c_master_control = 0x17
-        sleep(0.005)
+        sleep(0.100)
         # print("i2c master control:", bin(self._i2c_master_control))
         # sleep(0.005)
+        """
+        write>0x7F>-0x30$                                  |  write>0x7F>-0x30$
+        write>0x01>-0x17$                                  |  write>0x01>-0x17$
+        write>0x01$                                        |  write>0x01$
+        read>-0x17$                                        |  read>-0x00$ *********
+        """
 
+        # TODO: Determine why this does not work sometimes
         self._bank = 0
+        sleep(0.100)
         self._i2c_master_enable = True
         sleep(0.020)
+        """
+        write>0x7F>-0x00$                                  |  write>0x7F>-0x00$
+        write>0x03$                                        |  write>0x03$
+        read>-0x00$                                        |  read>-0x00$
+        write>0x03>-0x20$                                  |  write>0x03>-0x20$
+        write>0x7F$                                        |  write>0x7F$
+        read>-0x00$                                        |  read>-0x00$
+        write>0x03$                                        |  write>0x03$
+        read>-0x20$                                        |  read>-0x00$ **********
+        """
         # print("i2c master enable:", bin(self._i2c_master_enable))
         # sleep(0.005)
 
@@ -594,6 +547,8 @@ class ICM20948(ICM20X):
         # 0x2 = 20hz Continuous measurement mode 2
         # 0x4 = 50hz Continuous measurement mode 3
         # 0x8 = 100hz Continuous measurement mode 4
+        # TODO: Investigate why  the above I2C master setup sometimes fails, causing this to endlessly loop
+        # waiting for the I2C write to the magnetometer to finish
         self._write_mag_register(0x31, 0x08)
 
         # set up slave0 for reading into the bank 0 data registers
