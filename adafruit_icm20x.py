@@ -224,6 +224,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         self.initialize()
 
     def initialize(self):
+        """Configure the sensors with the default settings. For use after calling `reset()`"""
         # TODO: method-ify
         self._bank = 0
         sleep(0.005)
@@ -238,7 +239,6 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
 
         self.accelerometer_data_rate_divisor = 20  # ~53.57Hz
         self.gyro_data_rate_divisor = 10  # ~100Hz
-
 
     def reset(self):
         """Resets the internal registers and restores the default settings"""
@@ -342,7 +342,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         sleep(0.005)
         self._accel_rate_divisor = value
         sleep(0.005)
-\
+
     @property
     def gyro_data_rate_divisor(self):
         """The divisor for the rate at which gyro measurements are taken in Hz
@@ -367,7 +367,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         sleep(0.005)
         self._gyro_rate_divisor = value
         sleep(0.005)
-\
+
     def _accel_rate_calc(self, divisor):  # pylint:disable=no-self-use
         return 1125 / (1 + divisor)
 
@@ -460,7 +460,7 @@ class ICM20948(ICM20X):
     _i2c_master_duty_cycle_en = RWBit(_ICM20X_LP_CONFIG, 6)
     _i2c_master_control = UnaryStruct(_ICM20X_I2C_MST_CTRL, ">B")
 
-    _i2c_master_enable = RWBit(_ICM20X_USER_CTRL, 5) # TODO: use this in sw reset
+    _i2c_master_enable = RWBit(_ICM20X_USER_CTRL, 5)  # TODO: use this in sw reset
     # _i2c_slave_reset = RWBit(_ICM20X_USER_CTRL, 4)
     # _dmp_reset = RWBit(_ICM20X_USER_CTRL, 3)
     # _sram_reset = RWBit(_ICM20X_USER_CTRL, 2)
@@ -507,7 +507,6 @@ class ICM20948(ICM20X):
         # print("I2C Master bypassed:", self._bypass_i2c_master)
         # sleep(0.005)
 
-
         # TODO: Determine why this does not work sometimes
         # no repeated start, i2c master clock = 345.60kHz
         self._bank = 3
@@ -516,30 +515,26 @@ class ICM20948(ICM20X):
         sleep(0.100)
         # print("i2c master control:", bin(self._i2c_master_control))
         # sleep(0.005)
-        """
-        write>0x7F>-0x30$                                  |  write>0x7F>-0x30$
-        write>0x01>-0x17$                                  |  write>0x01>-0x17$
-        write>0x01$                                        |  write>0x01$
-        read>-0x17$                                        |  read>-0x00$ *********
-        """
+        # trace:
+        # write>0x7F>-0x30$                                  |  write>0x7F>-0x30$
+        # write>0x01>-0x17$                                  |  write>0x01>-0x17$
+        # write>0x01$                                        |  write>0x01$
+        # read>-0x17$                                        |  read>-0x00$ *********
 
         # TODO: Determine why this does not work sometimes
         self._bank = 0
         sleep(0.100)
         self._i2c_master_enable = True
         sleep(0.020)
-        """
-        write>0x7F>-0x00$                                  |  write>0x7F>-0x00$
-        write>0x03$                                        |  write>0x03$
-        read>-0x00$                                        |  read>-0x00$
-        write>0x03>-0x20$                                  |  write>0x03>-0x20$
-        write>0x7F$                                        |  write>0x7F$
-        read>-0x00$                                        |  read>-0x00$
-        write>0x03$                                        |  write>0x03$
-        read>-0x20$                                        |  read>-0x00$ **********
-        """
-        # print("i2c master enable:", bin(self._i2c_master_enable))
-        # sleep(0.005)
+        # trace
+        # write>0x7F>-0x00$                                  |  write>0x7F>-0x00$
+        # write>0x03$                                        |  write>0x03$
+        # read>-0x00$                                        |  read>-0x00$
+        # write>0x03>-0x20$                                  |  write>0x03>-0x20$
+        # write>0x7F$                                        |  write>0x7F$
+        # read>-0x00$                                        |  read>-0x00$
+        # write>0x03$                                        |  write>0x03$
+        # read>-0x20$                                        |  read>-0x00$ **********
 
         # https://www.y-ic.es/datasheet/78/SMDSW.020-2OZ.pdf page 9
         # set the magnetometer data rate
@@ -547,8 +542,8 @@ class ICM20948(ICM20X):
         # 0x2 = 20hz Continuous measurement mode 2
         # 0x4 = 50hz Continuous measurement mode 3
         # 0x8 = 100hz Continuous measurement mode 4
-        # TODO: Investigate why  the above I2C master setup sometimes fails, causing this to endlessly loop
-        # waiting for the I2C write to the magnetometer to finish
+        # TODO: Investigate why  the above I2C master setup sometimes fails, causing
+        # this to endlessly loop waiting for the I2C write to the magnetometer to finish
         self._write_mag_register(0x31, 0x08)
 
         # set up slave0 for reading into the bank 0 data registers
