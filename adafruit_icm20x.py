@@ -61,8 +61,8 @@ _ICM20948_DEFAULT_ADDRESS = 0x69  # icm20649 default i2c address
 _ICM20649_DEVICE_ID = 0xE1  # Correct content of WHO_AM_I register
 _ICM20948_DEVICE_ID = 0xEA  # Correct content of WHO_AM_I register
 
-# Functions using these bank-specific registers are responsible for ensuring that the correct bank is set
-# perhaps refactor to have the bank be part of the definition
+# Functions using these bank-specific registers are responsible for ensuring
+# that the correct bank is set
 # Bank 0
 _ICM20X_WHO_AM_I = 0x00  # device_id register
 _ICM20X_REG_BANK_SEL = 0x7F  # register bank selection register
@@ -159,8 +159,6 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     _raw_accel_data = Struct(_ICM20X_ACCEL_XOUT_H, ">hhh")
     _raw_gyro_data = Struct(_ICM20X_GYRO_XOUT_H, ">hhh")
 
-    # _i2c_master_duty_cycle_en = RWBit(_ICM20X_LP_CONFIG, 6)
-
     # Bank 2
     _gyro_range = RWBits(2, _ICM20X_GYRO_CONFIG_1, 1)
     _accel_config = Struct(_ICM20X_ACCEL_CONFIG_1, ">B")
@@ -197,8 +195,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         sleep(0.005)
         self._sleep = False
         sleep(0.005)
-        # TODO: method-ify
-        # self._i2c_master_duty_cycle_en = True #WHY?
+
         sleep(0.005)
 
         self.accelerometer_range = AccelRange.RANGE_8G  # pylint: disable=no-member
@@ -412,7 +409,7 @@ class ICM20649(ICM20X):
         super().__init__(i2c_bus, address)
 
 
-class ICM20948(ICM20X):
+class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
     """Library for the ST ICM-20948 Wide-Range 6-DoF Accelerometer and Gyro.
 
         :param ~busio.I2C i2c_bus: The I2C bus the ICM20948 is connected to.
@@ -424,7 +421,6 @@ class ICM20948(ICM20X):
     _raw_mag_data = Struct(_ICM20948_EXT_SLV_SENS_DATA_00, "<hhhh")
 
     _bypass_i2c_master = RWBit(_ICM20X_REG_INT_PIN_CFG, 1)
-    _i2c_master_duty_cycle_en = RWBit(_ICM20X_LP_CONFIG, 6)
     _i2c_master_control = UnaryStruct(_ICM20X_I2C_MST_CTRL, ">B")
     _i2c_master_enable = RWBit(_ICM20X_USER_CTRL, 5)  # TODO: use this in sw reset
     _i2c_master_reset = RWBit(_ICM20X_USER_CTRL, 1)
@@ -436,7 +432,6 @@ class ICM20948(ICM20X):
 
     _slave4_addr = UnaryStruct(_ICM20X_I2C_SLV4_ADDR, ">B")
     _slave4_reg = UnaryStruct(_ICM20X_I2C_SLV4_REG, ">B")
-    _slave4_ctrl = UnaryStruct(_ICM20X_I2C_SLV4_CTRL, ">B")
     _slave4_ctrl = UnaryStruct(_ICM20X_I2C_SLV4_CTRL, ">B")
     _slave4_do = UnaryStruct(_ICM20X_I2C_SLV4_DO, ">B")
     _slave4_di = UnaryStruct(_ICM20X_I2C_SLV4_DI, ">B")
@@ -463,14 +458,14 @@ class ICM20948(ICM20X):
 
     @property
     def _mag_configured(self):
-        for tries in range(5):
-            id_tup = self._mag_id()
-            # success
-            if id_tup is not None:
+        success = False
+        for _i in range(5):
+            success = self._mag_id() is not None
+
+            if success:
                 return True
+            self._reset_i2c_master()
             # i2c master stuck, try resetting
-            else:
-                self._reset_i2c_master()
         return False
 
     def _reset_i2c_master(self):
@@ -514,9 +509,8 @@ class ICM20948(ICM20X):
         self._setup_mag_readout()
 
         return True
-        ################ SAME ABOVE ###########
 
-        # set up slave0 for reading into the bank 0 data registers
+    # set up slave0 for reading into the bank 0 data registers
     def _setup_mag_readout(self):
         self._bank = 3
         self._slave0_addr = 0x8C
@@ -527,9 +521,7 @@ class ICM20948(ICM20X):
         sleep(0.005)
 
     def _mag_id(self):
-        mag_mfg_id = self._read_mag_register(0x00)
-        mag_chip_id = self._read_mag_register(0x01)
-        return (mag_mfg_id, mag_chip_id)
+        return self._read_mag_register(0x01)
 
     @property
     def magnetic(self):
@@ -554,18 +546,21 @@ class ICM20948(ICM20X):
         sleep(0.005)
         self._slave4_reg = register_addr
         sleep(0.005)
-        self._slave4_ctrl = 0x80  # enable, don't raise interrupt, write register value, no delay
+        self._slave4_ctrl = (
+            0x80  # enable, don't raise interrupt, write register value, no delay
+        )
         sleep(0.005)
         self._bank = 0
-        # add max cycle count
-        while not self._slave_finished:
+
+        finished = False
+        for _i in range(100):
+            finished = self._slave_finished
+            if finished:  # bueno!
+                break
             sleep(0.010)
 
-        # if i2c_mst_status & (1<<4): # Check I2C_SLV4_NACK bit [4]
-		# 	txn_failed = True
-
-		# if count > max_cycles:
-		# 	txn_failed = True
+        if not finished:
+            return None
 
         self._bank = 3
         mag_register_data = self._slave4_di
@@ -581,18 +576,17 @@ class ICM20948(ICM20X):
         sleep(0.005)
         self._slave4_do = value
         sleep(0.005)
-        self._slave4_ctrl = 0x80  # enable, don't raise interrupt, write register value, no delay
+        self._slave4_ctrl = (
+            0x80  # enable, don't raise interrupt, write register value, no delay
+        )
         sleep(0.005)
         self._bank = 0
 
-        # add max cycle count
-        # wait for write to mag register to finish")
-        while not self._slave_finished:
-            print(".", end="")
+        finished = False
+        for _i in range(100):
+            finished = self._slave_finished
+            if finished:  # bueno!
+                break
             sleep(0.010)
 
-        # 		if i2c_mst_status & (1<<4): # Check I2C_SLV4_NACK bit [4]
-		# 	txn_failed = True
-
-		# if count > max_cycles:
-		# 	txn_failed = True
+        return finished
