@@ -61,7 +61,8 @@ _ICM20948_DEFAULT_ADDRESS = 0x69  # icm20649 default i2c address
 _ICM20649_DEVICE_ID = 0xE1  # Correct content of WHO_AM_I register
 _ICM20948_DEVICE_ID = 0xEA  # Correct content of WHO_AM_I register
 
-
+# Functions using these bank-specific registers are responsible for ensuring that the correct bank is set
+# perhaps refactor to have the bank be part of the definition
 # Bank 0
 _ICM20X_WHO_AM_I = 0x00  # device_id register
 _ICM20X_REG_BANK_SEL = 0x7F  # register bank selection register
@@ -425,12 +426,8 @@ class ICM20948(ICM20X):
     _bypass_i2c_master = RWBit(_ICM20X_REG_INT_PIN_CFG, 1)
     _i2c_master_duty_cycle_en = RWBit(_ICM20X_LP_CONFIG, 6)
     _i2c_master_control = UnaryStruct(_ICM20X_I2C_MST_CTRL, ">B")
-
     _i2c_master_enable = RWBit(_ICM20X_USER_CTRL, 5)  # TODO: use this in sw reset
-    # _i2c_slave_reset = RWBit(_ICM20X_USER_CTRL, 4)
-    # _dmp_reset = RWBit(_ICM20X_USER_CTRL, 3)
-    # _sram_reset = RWBit(_ICM20X_USER_CTRL, 2)
-    # _i2c_master_reset = RWBit(_ICM20X_USER_CTRL, 1)
+    _i2c_master_reset = RWBit(_ICM20X_USER_CTRL, 1)
 
     _slave0_addr = UnaryStruct(_ICM20X_I2C_SLV0_ADDR, ">B")
     _slave0_reg = UnaryStruct(_ICM20X_I2C_SLV0_REG, ">B")
@@ -464,55 +461,63 @@ class ICM20948(ICM20X):
         super().__init__(i2c_bus, address)
         self._magnetometer_init()
 
-    def _magnetometer_init(self):
+    @property
+    def _mag_configured(self):
+        for tries in range(5):
+            id_tup = self._mag_id()
+            # success
+            if id_tup is not None:
+                return True
+            # i2c master stuck, try resetting
+            else:
+                self._reset_i2c_master()
+        return False
+
+    def _reset_i2c_master(self):
+        self._bank = 0
+        self._i2c_master_reset = True
+
+    def _magnetometer_enable(self):
 
         self._bank = 0
         sleep(0.100)
         self._bypass_i2c_master = False
         sleep(0.005)
-        # print("I2C Master bypassed:", self._bypass_i2c_master)
-        # sleep(0.005)
 
-        # TODO: Determine why this does not work sometimes
         # no repeated start, i2c master clock = 345.60kHz
         self._bank = 3
         sleep(0.100)
         self._i2c_master_control = 0x17
         sleep(0.100)
-        # print("i2c master control:", bin(self._i2c_master_control))
-        # sleep(0.005)
-        # trace:
-        # write>0x7F>-0x30$                                  |  write>0x7F>-0x30$
-        # write>0x01>-0x17$                                  |  write>0x01>-0x17$
-        # write>0x01$                                        |  write>0x01$
-        # read>-0x17$                                        |  read>-0x00$ *********
 
-        # TODO: Determine why this does not work sometimes
         self._bank = 0
         sleep(0.100)
         self._i2c_master_enable = True
         sleep(0.020)
-        # trace
-        # write>0x7F>-0x00$                                  |  write>0x7F>-0x00$
-        # write>0x03$                                        |  write>0x03$
-        # read>-0x00$                                        |  read>-0x00$
-        # write>0x03>-0x20$                                  |  write>0x03>-0x20$
-        # write>0x7F$                                        |  write>0x7F$
-        # read>-0x00$                                        |  read>-0x00$
-        # write>0x03$                                        |  write>0x03$
-        # read>-0x20$                                        |  read>-0x00$ **********
 
+    def _set_mag_data_rate(self, data_rate=0x08):
         # https://www.y-ic.es/datasheet/78/SMDSW.020-2OZ.pdf page 9
         # set the magnetometer data rate
         # 0x1 = 10hz Continuous measurement mode 1
         # 0x2 = 20hz Continuous measurement mode 2
         # 0x4 = 50hz Continuous measurement mode 3
         # 0x8 = 100hz Continuous measurement mode 4
-        # TODO: Investigate why  the above I2C master setup sometimes fails, causing
-        # this to endlessly loop waiting for the I2C write to the magnetometer to finish
-        self._write_mag_register(0x31, 0x08)
+        self._write_mag_register(0x31, data_rate)
+
+    def _magnetometer_init(self):
+        self._magnetometer_enable()
+        self._set_mag_data_rate()
+
+        if not self._mag_configured:
+            return False
+
+        self._setup_mag_readout()
+
+        return True
+        ################ SAME ABOVE ###########
 
         # set up slave0 for reading into the bank 0 data registers
+    def _setup_mag_readout(self):
         self._bank = 3
         self._slave0_addr = 0x8C
         sleep(0.005)
@@ -520,6 +525,11 @@ class ICM20948(ICM20X):
         sleep(0.005)
         self._slave0_ctrl = 0x89  # enable
         sleep(0.005)
+
+    def _mag_id(self):
+        mag_mfg_id = self._read_mag_register(0x00)
+        mag_chip_id = self._read_mag_register(0x01)
+        return (mag_mfg_id, mag_chip_id)
 
     @property
     def magnetic(self):
@@ -544,11 +554,19 @@ class ICM20948(ICM20X):
         sleep(0.005)
         self._slave4_reg = register_addr
         sleep(0.005)
-        self._slave4_ctrl = 0x80  # enable
+        self._slave4_ctrl = 0x80  # enable, don't raise interrupt, write register value, no delay
         sleep(0.005)
         self._bank = 0
+        # add max cycle count
         while not self._slave_finished:
             sleep(0.010)
+
+        # if i2c_mst_status & (1<<4): # Check I2C_SLV4_NACK bit [4]
+		# 	txn_failed = True
+
+		# if count > max_cycles:
+		# 	txn_failed = True
+
         self._bank = 3
         mag_register_data = self._slave4_di
         sleep(0.005)
@@ -563,10 +581,18 @@ class ICM20948(ICM20X):
         sleep(0.005)
         self._slave4_do = value
         sleep(0.005)
-        self._slave4_ctrl = 0x80  # enable
+        self._slave4_ctrl = 0x80  # enable, don't raise interrupt, write register value, no delay
         sleep(0.005)
         self._bank = 0
+
+        # add max cycle count
         # wait for write to mag register to finish")
         while not self._slave_finished:
             print(".", end="")
             sleep(0.010)
+
+        # 		if i2c_mst_status & (1<<4): # Check I2C_SLV4_NACK bit [4]
+		# 	txn_failed = True
+
+		# if count > max_cycles:
+		# 	txn_failed = True
