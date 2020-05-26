@@ -1,8 +1,8 @@
 Introduction
 ============
 
-.. image:: https://readthedocs.org/projects/adafruit-circuitpython-icm20x/badge/?version=latest
-    :target: https://circuitpython.readthedocs.io/projects/icm20x/en/latest/
+.. image:: https://readthedocs.org/projects/adafruit-circuitpython-icm20649/badge/?version=latest
+    :target: https://circuitpython.readthedocs.io/projects/icm20649/en/latest/
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/discord/327254708534116352.svg
@@ -58,7 +58,8 @@ Usage Example
 
 For use with the ICM20649:
 
-.. code-block: python3
+.. code-block:: python3
+
     import time
     import board
     import busio
@@ -75,7 +76,8 @@ For use with the ICM20649:
 
 For use with the ICM20948:
 
-.. code-block: python3
+.. code-block:: python3
+
     import time
     import board
     import busio
