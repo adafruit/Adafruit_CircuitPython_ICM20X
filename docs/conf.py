@@ -46,8 +46,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "Adafruit ICM20649 Library"
-copyright = "2019 Bryan Siepert"
+project = "Adafruit ICM20X Library"
+copyright = "2020 Bryan Siepert"
 author = "Bryan Siepert"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -147,8 +147,8 @@ latex_elements = {
 latex_documents = [
     (
         master_doc,
-        "AdafruitICM20649Library.tex",
-        "AdafruitICM20649 Library Documentation",
+        "AdafruitICM20XLibrary.tex",
+        "AdafruitICM20X Library Documentation",
         author,
         "manual",
     ),
@@ -161,8 +161,8 @@ latex_documents = [
 man_pages = [
     (
         master_doc,
-        "AdafruitICM20649library",
-        "Adafruit ICM20649 Library Documentation",
+        "AdafruitICM20Xlibrary",
+        "Adafruit ICM20X Library Documentation",
         [author],
         1,
     )
@@ -176,10 +176,10 @@ man_pages = [
 texinfo_documents = [
     (
         master_doc,
-        "AdafruitICM20649Library",
-        "Adafruit ICM20649 Library Documentation",
+        "AdafruitICM20XLibrary",
+        "Adafruit ICM20X Library Documentation",
         author,
-        "AdafruitICM20649Library",
+        "AdafruitICM20XLibrary",
         "One line description of project.",
         "Miscellaneous",
     ),

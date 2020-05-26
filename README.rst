@@ -1,19 +1,19 @@
 Introduction
 ============
 
-.. image:: https://readthedocs.org/projects/adafruit-circuitpython-icm20649/badge/?version=latest
-    :target: https://circuitpython.readthedocs.io/projects/icm20649/en/latest/
+.. image:: https://readthedocs.org/projects/adafruit-circuitpython-icm20x/badge/?version=latest
+    :target: https://circuitpython.readthedocs.io/projects/icm20x/en/latest/
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/discord/327254708534116352.svg
     :target: https://discord.gg/nBQh6qu
     :alt: Discord
 
-.. image:: https://github.com/adafruit/Adafruit_CircuitPython_ICM20649/workflows/Build%20CI/badge.svg
-    :target: https://github.com/adafruit/Adafruit_CircuitPython_ICM20649/actions
+.. image:: https://github.com/adafruit/Adafruit_CircuitPython_ICM20X/workflows/Build%20CI/badge.svg
+    :target: https://github.com/adafruit/Adafruit_CircuitPython_ICM20X/actions
     :alt: Build Status
 
-Library for the ST ICM-20649 Wide-Range 6-DoF Accelerometer and Gyro
+Library for the ST ICM-20X Wide-Range 6-DoF Accelerometer and Gyro Family
 
 
 Dependencies
@@ -32,17 +32,17 @@ Installing from PyPI
 =====================
 
 On supported GNU/Linux systems like the Raspberry Pi, you can install the driver locally `from
-PyPI <https://pypi.org/project/adafruit-circuitpython-icm20649/>`_. To install for current user:
+PyPI <https://pypi.org/project/adafruit-circuitpython-icm20x/>`_. To install for current user:
 
 .. code-block:: shell
 
-    pip3 install adafruit-circuitpython-icm20649
+    pip3 install adafruit-circuitpython-icm20x
 
 To install system-wide (this may be required in some cases):
 
 .. code-block:: shell
 
-    sudo pip3 install adafruit-circuitpython-icm20649
+    sudo pip3 install adafruit-circuitpython-icm20x
 
 To install in a virtual environment in your current project:
 
@@ -51,7 +51,7 @@ To install in a virtual environment in your current project:
     mkdir project-name && cd project-name
     python3 -m venv .env
     source .env/bin/activate
-    pip3 install adafruit-circuitpython-icm20649
+    pip3 install adafruit-circuitpython-icm20x
 
 Usage Example
 =============
@@ -95,7 +95,7 @@ Contributing
 ============
 
 Contributions are welcome! Please read our `Code of Conduct
-<https://github.com/adafruit/Adafruit_CircuitPython_ICM20649/blob/master/CODE_OF_CONDUCT.md>`_
+<https://github.com/adafruit/Adafruit_CircuitPython_ICM20X/blob/master/CODE_OF_CONDUCT.md>`_
 before contributing to help this project stay welcoming.
 
 Documentation

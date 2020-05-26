@@ -1,6 +1,6 @@
 # The MIT License (MIT)
 #
-# Copyright (c) 2019 Bryan Siepert for Adafruit Industries
+# Copyright (c) 2020 Bryan Siepert for Adafruit Industries
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -46,7 +46,7 @@ Implementation Notes
 """
 
 __version__ = "0.0.0-auto.0"
-__repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_ICM20649.git"
+__repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_ICM20X.git"
 # Common imports; remove if unused or pylint will complain
 from time import sleep
 import adafruit_bus_device.i2c_device as i2c_device
@@ -63,12 +63,12 @@ _ICM20948_DEVICE_ID = 0xEA  # Correct content of WHO_AM_I register
 
 
 # Bank 0
-_ICM20649_WHO_AM_I = 0x00  # device_id register
-_ICM20649_REG_BANK_SEL = 0x7F  # register bank selection register
-_ICM20649_PWR_MGMT_1 = 0x06  # primary power management register
-_ICM20649_ACCEL_XOUT_H = 0x2D  # first byte of accel data
-_ICM20649_GYRO_XOUT_H = 0x33  # first byte of accel data
-_ICM20649_I2C_MST_STATUS = 0x17  # I2C Master Status bits
+_ICM20X_WHO_AM_I = 0x00  # device_id register
+_ICM20X_REG_BANK_SEL = 0x7F  # register bank selection register
+_ICM20X_PWR_MGMT_1 = 0x06  # primary power management register
+_ICM20X_ACCEL_XOUT_H = 0x2D  # first byte of accel data
+_ICM20X_GYRO_XOUT_H = 0x33  # first byte of accel data
+_ICM20X_I2C_MST_STATUS = 0x17  # I2C Master Status bits
 _ICM20948_EXT_SLV_SENS_DATA_00 = 0x3B
 
 _ICM20X_USER_CTRL = 0x03  # User Control Reg. Includes I2C Master
@@ -78,11 +78,11 @@ _ICM20X_REG_INT_ENABLE_0 = 0x10  # Interrupt enable register 0
 _ICM20X_REG_INT_ENABLE_1 = 0x11  # Interrupt enable register 1
 
 # Bank 2
-_ICM20649_GYRO_SMPLRT_DIV = 0x00
-_ICM20649_GYRO_CONFIG_1 = 0x01
-_ICM20649_ACCEL_SMPLRT_DIV_1 = 0x10
-_ICM20649_ACCEL_SMPLRT_DIV_2 = 0x11
-_ICM20649_ACCEL_CONFIG_1 = 0x14
+_ICM20X_GYRO_SMPLRT_DIV = 0x00
+_ICM20X_GYRO_CONFIG_1 = 0x01
+_ICM20X_ACCEL_SMPLRT_DIV_1 = 0x10
+_ICM20X_ACCEL_SMPLRT_DIV_2 = 0x11
+_ICM20X_ACCEL_CONFIG_1 = 0x14
 
 
 # Bank 3
@@ -140,36 +140,37 @@ class GyroRange(CV):
 
 
 class ICM20X:  # pylint:disable=too-many-instance-attributes
-    """Library for the ST ICM-20649 Wide-Range 6-DoF Accelerometer and Gyro.
+    """Library for the ST ICM-20X Wide-Range 6-DoF Accelerometer and Gyro Family
 
-        :param ~busio.I2C i2c_bus: The I2C bus the ICM20649 is connected to.
+
+        :param ~busio.I2C i2c_bus: The I2C bus the ICM20X is connected to.
         :param address: The I2C slave address of the sensor
 
     """
 
     # Bank 0
-    _device_id = ROUnaryStruct(_ICM20649_WHO_AM_I, "<B")
-    _bank_reg = UnaryStruct(_ICM20649_REG_BANK_SEL, "<B")
-    _reset = RWBit(_ICM20649_PWR_MGMT_1, 7)
-    _sleep = RWBit(_ICM20649_PWR_MGMT_1, 6)
-    _clock_source = RWBits(3, _ICM20649_PWR_MGMT_1, 0)
+    _device_id = ROUnaryStruct(_ICM20X_WHO_AM_I, "<B")
+    _bank_reg = UnaryStruct(_ICM20X_REG_BANK_SEL, "<B")
+    _reset = RWBit(_ICM20X_PWR_MGMT_1, 7)
+    _sleep = RWBit(_ICM20X_PWR_MGMT_1, 6)
+    _clock_source = RWBits(3, _ICM20X_PWR_MGMT_1, 0)
 
-    _raw_accel_data = Struct(_ICM20649_ACCEL_XOUT_H, ">hhh")
-    _raw_gyro_data = Struct(_ICM20649_GYRO_XOUT_H, ">hhh")
+    _raw_accel_data = Struct(_ICM20X_ACCEL_XOUT_H, ">hhh")
+    _raw_gyro_data = Struct(_ICM20X_GYRO_XOUT_H, ">hhh")
 
     # _i2c_master_duty_cycle_en = RWBit(_ICM20X_LP_CONFIG, 6)
 
     # Bank 2
-    _gyro_range = RWBits(2, _ICM20649_GYRO_CONFIG_1, 1)
-    _accel_config = Struct(_ICM20649_ACCEL_CONFIG_1, ">B")
-    _gyro_config1 = Struct(_ICM20649_GYRO_CONFIG_1, ">B")
-    _accel_dlpf_enable = RWBits(1, _ICM20649_ACCEL_CONFIG_1, 0)
-    _accel_range = RWBits(2, _ICM20649_ACCEL_CONFIG_1, 1)
-    _accel_dlpf_config = RWBits(3, _ICM20649_ACCEL_CONFIG_1, 3)
+    _gyro_range = RWBits(2, _ICM20X_GYRO_CONFIG_1, 1)
+    _accel_config = Struct(_ICM20X_ACCEL_CONFIG_1, ">B")
+    _gyro_config1 = Struct(_ICM20X_GYRO_CONFIG_1, ">B")
+    _accel_dlpf_enable = RWBits(1, _ICM20X_ACCEL_CONFIG_1, 0)
+    _accel_range = RWBits(2, _ICM20X_ACCEL_CONFIG_1, 1)
+    _accel_dlpf_config = RWBits(3, _ICM20X_ACCEL_CONFIG_1, 3)
 
     # this value is a 12-bit register spread across two bytes, big-endian first
-    _accel_rate_divisor = UnaryStruct(_ICM20649_ACCEL_SMPLRT_DIV_1, ">H")
-    _gyro_rate_divisor = UnaryStruct(_ICM20649_GYRO_SMPLRT_DIV, ">B")
+    _accel_rate_divisor = UnaryStruct(_ICM20X_ACCEL_SMPLRT_DIV_1, ">H")
+    _gyro_rate_divisor = UnaryStruct(_ICM20X_GYRO_SMPLRT_DIV, ">B")
 
     @property
     def _bank(self):
@@ -417,7 +418,7 @@ class ICM20948(ICM20X):
         :param address: The I2C slave address of the sensor
     """
 
-    _slave_finished = ROBit(_ICM20649_I2C_MST_STATUS, 6)
+    _slave_finished = ROBit(_ICM20X_I2C_MST_STATUS, 6)
 
     _raw_mag_data = Struct(_ICM20948_EXT_SLV_SENS_DATA_00, "<hhhh")
 
