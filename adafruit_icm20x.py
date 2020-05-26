@@ -140,6 +140,18 @@ class GyroRange(CV):
     pass  # pylint: disable=unnecessary-pass
 
 
+class GyroDLPFFreq(CV):
+    """Options for ``gyro_dlpf_cutoff``"""
+
+    pass  # pylint: disable=unnecessary-pass
+
+
+class AccelDLPFFreq(CV):
+    """Options for ``accel_dlpf_cutoff``"""
+
+    pass  # pylint: disable=unnecessary-pass
+
+
 class ICM20X:  # pylint:disable=too-many-instance-attributes
     """Library for the ST ICM-20X Wide-Range 6-DoF Accelerometer and Gyro Family
 
@@ -160,9 +172,10 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     _raw_gyro_data = Struct(_ICM20X_GYRO_XOUT_H, ">hhh")
 
     # Bank 2
+    _gyro_dlpf_enable = RWBits(1, _ICM20X_GYRO_CONFIG_1, 0)
     _gyro_range = RWBits(2, _ICM20X_GYRO_CONFIG_1, 1)
-    _accel_config = Struct(_ICM20X_ACCEL_CONFIG_1, ">B")
-    _gyro_config1 = Struct(_ICM20X_GYRO_CONFIG_1, ">B")
+    _gyro_dlpf_config = RWBits(3, _ICM20X_GYRO_CONFIG_1, 3)
+
     _accel_dlpf_enable = RWBits(1, _ICM20X_ACCEL_CONFIG_1, 0)
     _accel_range = RWBits(2, _ICM20X_ACCEL_CONFIG_1, 1)
     _accel_dlpf_config = RWBits(3, _ICM20X_ACCEL_CONFIG_1, 3)
@@ -170,6 +183,87 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     # this value is a 12-bit register spread across two bytes, big-endian first
     _accel_rate_divisor = UnaryStruct(_ICM20X_ACCEL_SMPLRT_DIV_1, ">H")
     _gyro_rate_divisor = UnaryStruct(_ICM20X_GYRO_SMPLRT_DIV, ">B")
+    AccelDLPFFreq.add_values(
+        (
+            (
+                "DISABLED",
+                -1,
+                "Disabled",
+                None,
+            ),  # magical value that we will use do disable
+            ("FREQ_246_0HZ_3DB", 1, 246.0, None),
+            ("FREQ_111_4HZ_3DB", 2, 111.4, None),
+            ("FREQ_50_4HZ_3DB", 3, 50.4, None),
+            ("FREQ_23_9HZ_3DB", 4, 23.9, None),
+            ("FREQ_11_5HZ_3DB", 5, 11.5, None),
+            ("FREQ_5_7HZ_3DB", 6, 5.7, None),
+            ("FREQ_473HZ_3DB", 7, 473, None),
+        )
+    )
+    GyroDLPFFreq.add_values(
+        (
+            (
+                "DISABLED",
+                -1,
+                "Disabled",
+                None,
+            ),  # magical value that we will use do disable
+            ("FREQ_196_6HZ_3DB", 0, 196.6, None),
+            ("FREQ_151_8HZ_3DB", 1, 151.8, None),
+            ("FREQ_119_5HZ_3DB", 2, 119.5, None),
+            ("FREQ_51_2HZ_3DB", 3, 51.2, None),
+            ("FREQ_23_9HZ_3DB", 4, 23.9, None),
+            ("FREQ_11_6HZ_3DB", 5, 11.6, None),
+            ("FREQ_5_7HZ_3DB", 6, 5.7, None),
+            ("FREQ_361_4HZ_3DB", 7, 361.4, None),
+        )
+    )
+
+    @property
+    def accel_dlpf_cutoff(self):
+        """The cutoff frequency for the accelerometer's digital low pass filter. Signals
+        above the given frequency will be filtered out. Must be an ``AccelDLPFCutoff``.
+        Use AccelDLPFCutoff.DISABLED to disable the filter
+
+        **Note** readings immediately following setting a cutoff frequency will be
+        inaccurate due to the filter "warming up" """
+        self._bank = 2
+        return self._accel_dlpf_config
+
+    @accel_dlpf_cutoff.setter
+    def accel_dlpf_cutoff(self, cutoff_frequency):
+        if not AccelDLPFFreq.is_valid(cutoff_frequency):
+            raise AttributeError("accel_dlpf_cutoff must be an `AccelDLPFFreq`")
+        self._bank = 2
+        # check for shutdown
+        if cutoff_frequency is AccelDLPFFreq.DISABLED:  # pylint: disable=no-member
+            self._accel_dlpf_enable = False
+            return
+        self._accel_dlpf_enable = True
+        self._accel_dlpf_config = cutoff_frequency
+
+    @property
+    def gyro_dlpf_cutoff(self):
+        """The cutoff frequency for the gyro's digital low pass filter. Signals above the
+        given frequency will be filtered out. Must be a ``GyroDLPFFreq``. Use
+        GyroDLPFCutoff.DISABLED to disable the filter
+
+        **Note** readings immediately following setting a cutoff frequency will be
+        inaccurate due to the filter "warming up" """
+        self._bank = 2
+        return self._gyro_dlpf_config
+
+    @gyro_dlpf_cutoff.setter
+    def gyro_dlpf_cutoff(self, cutoff_frequency):
+        if not GyroDLPFFreq.is_valid(cutoff_frequency):
+            raise AttributeError("gyro_dlpf_cutoff must be a `GyroDLPFFreq`")
+        self._bank = 2
+        # check for shutdown
+        if cutoff_frequency is GyroDLPFFreq.DISABLED:  # pylint: disable=no-member
+            self._gyro_dlpf_enable = False
+            return
+        self._gyro_dlpf_enable = True
+        self._gyro_dlpf_config = cutoff_frequency
 
     @property
     def _bank(self):
@@ -190,12 +284,9 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
 
     def initialize(self):
         """Configure the sensors with the default settings. For use after calling `reset()`"""
-        # TODO: method-ify
         self._bank = 0
         sleep(0.005)
         self._sleep = False
-        sleep(0.005)
-
         sleep(0.005)
 
         self.accelerometer_range = AccelRange.RANGE_8G  # pylint: disable=no-member
