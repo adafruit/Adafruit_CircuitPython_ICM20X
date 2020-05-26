@@ -162,15 +162,21 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     """
 
     # Bank 0
-    _device_id = ROUnaryStruct(_ICM20X_WHO_AM_I, "<B")
-    _bank_reg = UnaryStruct(_ICM20X_REG_BANK_SEL, "<B")
+    _device_id = ROUnaryStruct(_ICM20X_WHO_AM_I, ">B")
+    _bank_reg = UnaryStruct(_ICM20X_REG_BANK_SEL, ">B")
     _reset = RWBit(_ICM20X_PWR_MGMT_1, 7)
     _sleep = RWBit(_ICM20X_PWR_MGMT_1, 6)
     _low_power_en = RWBit(_ICM20X_PWR_MGMT_1, 5)
     _clock_source = RWBits(3, _ICM20X_PWR_MGMT_1, 0)
 
-    _raw_accel_data = Struct(_ICM20X_ACCEL_XOUT_H, ">hhh")
+    _raw_accel_data = Struct(_ICM20X_ACCEL_XOUT_H, ">hhh")  # ds says LE :|
     _raw_gyro_data = Struct(_ICM20X_GYRO_XOUT_H, ">hhh")
+
+    _lp_config_reg = UnaryStruct(_ICM20X_LP_CONFIG, ">B")
+
+    _i2c_master_cycle_en = RWBit(_ICM20X_LP_CONFIG, 6)
+    _accel_cycle_en = RWBit(_ICM20X_LP_CONFIG, 5)
+    _gyro_cycle_en = RWBit(_ICM20X_LP_CONFIG, 4)
 
     # Bank 2
     _gyro_dlpf_enable = RWBits(1, _ICM20X_GYRO_CONFIG_1, 0)
@@ -219,63 +225,6 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
             ("FREQ_361_4HZ_3DB", 7, 361.4, None),
         )
     )
-
-    @property
-    def accel_dlpf_cutoff(self):
-        """The cutoff frequency for the accelerometer's digital low pass filter. Signals
-        above the given frequency will be filtered out. Must be an ``AccelDLPFCutoff``.
-        Use AccelDLPFCutoff.DISABLED to disable the filter
-
-        **Note** readings immediately following setting a cutoff frequency will be
-        inaccurate due to the filter "warming up" """
-        self._bank = 2
-        return self._accel_dlpf_config
-
-    @accel_dlpf_cutoff.setter
-    def accel_dlpf_cutoff(self, cutoff_frequency):
-        if not AccelDLPFFreq.is_valid(cutoff_frequency):
-            raise AttributeError("accel_dlpf_cutoff must be an `AccelDLPFFreq`")
-        self._bank = 2
-        # check for shutdown
-        if cutoff_frequency is AccelDLPFFreq.DISABLED:  # pylint: disable=no-member
-            self._accel_dlpf_enable = False
-            return
-        self._accel_dlpf_enable = True
-        self._accel_dlpf_config = cutoff_frequency
-
-    @property
-    def gyro_dlpf_cutoff(self):
-        """The cutoff frequency for the gyro's digital low pass filter. Signals above the
-        given frequency will be filtered out. Must be a ``GyroDLPFFreq``. Use
-        GyroDLPFCutoff.DISABLED to disable the filter
-
-        **Note** readings immediately following setting a cutoff frequency will be
-        inaccurate due to the filter "warming up" """
-        self._bank = 2
-        return self._gyro_dlpf_config
-
-    @gyro_dlpf_cutoff.setter
-    def gyro_dlpf_cutoff(self, cutoff_frequency):
-        if not GyroDLPFFreq.is_valid(cutoff_frequency):
-            raise AttributeError("gyro_dlpf_cutoff must be a `GyroDLPFFreq`")
-        self._bank = 2
-        # check for shutdown
-        if cutoff_frequency is GyroDLPFFreq.DISABLED:  # pylint: disable=no-member
-            self._gyro_dlpf_enable = False
-            return
-        self._gyro_dlpf_enable = True
-        self._gyro_dlpf_config = cutoff_frequency
-
-    @property
-    def low_power(self):
-        """Enables or disables a low power mode for the sensors digital circuitry"""
-        self._bank = 0
-        return self._low_power_en
-
-    @low_power.setter
-    def low_power(self, enabled):
-        self._bank = 0
-        self._low_power_en = enabled
 
     @property
     def _bank(self):
@@ -481,6 +430,63 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         divisor = round(((1125.0 - value) / value))
         self.gyro_data_rate_divisor = divisor
 
+    @property
+    def accel_dlpf_cutoff(self):
+        """The cutoff frequency for the accelerometer's digital low pass filter. Signals
+        above the given frequency will be filtered out. Must be an ``AccelDLPFCutoff``.
+        Use AccelDLPFCutoff.DISABLED to disable the filter
+
+        **Note** readings immediately following setting a cutoff frequency will be
+        inaccurate due to the filter "warming up" """
+        self._bank = 2
+        return self._accel_dlpf_config
+
+    @accel_dlpf_cutoff.setter
+    def accel_dlpf_cutoff(self, cutoff_frequency):
+        if not AccelDLPFFreq.is_valid(cutoff_frequency):
+            raise AttributeError("accel_dlpf_cutoff must be an `AccelDLPFFreq`")
+        self._bank = 2
+        # check for shutdown
+        if cutoff_frequency is AccelDLPFFreq.DISABLED:  # pylint: disable=no-member
+            self._accel_dlpf_enable = False
+            return
+        self._accel_dlpf_enable = True
+        self._accel_dlpf_config = cutoff_frequency
+
+    @property
+    def gyro_dlpf_cutoff(self):
+        """The cutoff frequency for the gyro's digital low pass filter. Signals above the
+        given frequency will be filtered out. Must be a ``GyroDLPFFreq``. Use
+        GyroDLPFCutoff.DISABLED to disable the filter
+
+        **Note** readings immediately following setting a cutoff frequency will be
+        inaccurate due to the filter "warming up" """
+        self._bank = 2
+        return self._gyro_dlpf_config
+
+    @gyro_dlpf_cutoff.setter
+    def gyro_dlpf_cutoff(self, cutoff_frequency):
+        if not GyroDLPFFreq.is_valid(cutoff_frequency):
+            raise AttributeError("gyro_dlpf_cutoff must be a `GyroDLPFFreq`")
+        self._bank = 2
+        # check for shutdown
+        if cutoff_frequency is GyroDLPFFreq.DISABLED:  # pylint: disable=no-member
+            self._gyro_dlpf_enable = False
+            return
+        self._gyro_dlpf_enable = True
+        self._gyro_dlpf_config = cutoff_frequency
+
+    @property
+    def low_power(self):
+        """Enables or disables a low power mode for the sensors digital circuitry"""
+        self._bank = 0
+        return self._low_power_en
+
+    @low_power.setter
+    def low_power(self, enabled):
+        self._bank = 0
+        self._low_power_en = enabled
+
 
 class ICM20649(ICM20X):
     """Library for the ST ICM-20649 Wide-Range 6-DoF Accelerometer and Gyro.
@@ -521,6 +527,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
 
     _slave_finished = ROBit(_ICM20X_I2C_MST_STATUS, 6)
 
+    # mag data is LE
     _raw_mag_data = Struct(_ICM20948_EXT_SLV_SENS_DATA_00, "<hhhh")
 
     _bypass_i2c_master = RWBit(_ICM20X_REG_INT_PIN_CFG, 1)
