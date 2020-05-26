@@ -58,7 +58,8 @@ Usage Example
 
 For use with the ICM20649:
 
-.. code-block: python3
+.. code-block:: python3
+
     import time
     import board
     import busio
@@ -75,7 +76,8 @@ For use with the ICM20649:
 
 For use with the ICM20948:
 
-.. code-block: python3
+.. code-block:: python3
+
     import time
     import board
     import busio
