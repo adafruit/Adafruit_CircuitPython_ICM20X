@@ -166,6 +166,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     _bank_reg = UnaryStruct(_ICM20X_REG_BANK_SEL, "<B")
     _reset = RWBit(_ICM20X_PWR_MGMT_1, 7)
     _sleep = RWBit(_ICM20X_PWR_MGMT_1, 6)
+    _low_power_en = RWBit(_ICM20X_PWR_MGMT_1, 5)
     _clock_source = RWBits(3, _ICM20X_PWR_MGMT_1, 0)
 
     _raw_accel_data = Struct(_ICM20X_ACCEL_XOUT_H, ">hhh")
@@ -264,6 +265,17 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
             return
         self._gyro_dlpf_enable = True
         self._gyro_dlpf_config = cutoff_frequency
+
+    @property
+    def low_power(self):
+        """Enables or disables a low power mode for the sensors digital circuitry"""
+        self._bank = 0
+        return self._low_power_en
+
+    @low_power.setter
+    def low_power(self, enabled):
+        self._bank = 0
+        self._low_power_en = enabled
 
     @property
     def _bank(self):
