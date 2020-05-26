@@ -1,8 +1,8 @@
 Introduction
 ============
 
-.. image:: https://readthedocs.org/projects/adafruit-circuitpython-icm20x/badge/?version=latest
-    :target: https://circuitpython.readthedocs.io/projects/icm20x/en/latest/
+.. image:: https://readthedocs.org/projects/adafruit-circuitpython-icm20649/badge/?version=latest
+    :target: https://circuitpython.readthedocs.io/projects/icm20649/en/latest/
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/discord/327254708534116352.svg
