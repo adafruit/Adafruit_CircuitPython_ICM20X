@@ -608,6 +608,9 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
         super().__init__(i2c_bus, address)
         self._magnetometer_init()
 
+    # A million thanks to the SparkFun folks for their library that I pillaged to write this method!
+    # See their Python library here:
+    # https://github.com/sparkfun/Qwiic_9DoF_IMU_ICM20948_Py
     @property
     def _mag_configured(self):
         success = False
