@@ -1,7 +1,7 @@
 import time
 import board
 import busio
-from adafruit_icm20649 import ICM20649, AccelRange, GyroRange
+from adafruit_icm20x import ICM20649, AccelRange, GyroRange
 
 
 def printNewMax(value, current_max, axis):
@@ -17,7 +17,7 @@ i2c = busio.I2C(board.SCL, board.SDA)
 ism = ICM20649(i2c)
 
 ism.accelerometer_range = AccelRange.RANGE_30G
-print("Accelerometer range set to: %d G" % AccelRange.string[ism.accelerometer_range])
+print("Accelerometer range set to: %d g" % AccelRange.string[ism.accelerometer_range])
 
 ism.gyro_range = GyroRange.RANGE_500_DPS
 print("Gyro range set to: %d DPS" % GyroRange.string[ism.gyro_range])

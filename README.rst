@@ -9,11 +9,11 @@ Introduction
     :target: https://discord.gg/nBQh6qu
     :alt: Discord
 
-.. image:: https://github.com/adafruit/Adafruit_CircuitPython_ICM20649/workflows/Build%20CI/badge.svg
-    :target: https://github.com/adafruit/Adafruit_CircuitPython_ICM20649/actions
+.. image:: https://github.com/adafruit/Adafruit_CircuitPython_ICM20X/workflows/Build%20CI/badge.svg
+    :target: https://github.com/adafruit/Adafruit_CircuitPython_ICM20X/actions
     :alt: Build Status
 
-Library for the ST ICM-20649 Wide-Range 6-DoF Accelerometer and Gyro
+Library for the ST ICM-20X Wide-Range 6-DoF Accelerometer and Gyro Family
 
 
 Dependencies
@@ -32,17 +32,17 @@ Installing from PyPI
 =====================
 
 On supported GNU/Linux systems like the Raspberry Pi, you can install the driver locally `from
-PyPI <https://pypi.org/project/adafruit-circuitpython-icm20649/>`_. To install for current user:
+PyPI <https://pypi.org/project/adafruit-circuitpython-icm20x/>`_. To install for current user:
 
 .. code-block:: shell
 
-    pip3 install adafruit-circuitpython-icm20649
+    pip3 install adafruit-circuitpython-icm20x
 
 To install system-wide (this may be required in some cases):
 
 .. code-block:: shell
 
-    sudo pip3 install adafruit-circuitpython-icm20649
+    sudo pip3 install adafruit-circuitpython-icm20x
 
 To install in a virtual environment in your current project:
 
@@ -51,23 +51,45 @@ To install in a virtual environment in your current project:
     mkdir project-name && cd project-name
     python3 -m venv .env
     source .env/bin/activate
-    pip3 install adafruit-circuitpython-icm20649
+    pip3 install adafruit-circuitpython-icm20x
 
 Usage Example
 =============
 
-.. code-block: python3
+For use with the ICM20649:
+
+.. code-block:: python3
+
     import time
     import board
     import busio
-    import adafruit_icm20649
+    import adafruit_icm20x
 
     i2c = busio.I2C(board.SCL, board.SDA)
-    icm =  adafruit_icm20649.ICM20649(i2c)
+    icm = adafruit_icm20x.ICM20649(i2c)
 
     while True:
-        print("Acceleration: X:%.2f, Y: %.2f, Z: %.2f m/s^2"%(icm.acceleration))
-        print("Gyro X:%.2f, Y: %.2f, Z: %.2f degrees/s"%(icm.gyro))
+        print("Acceleration: X:%.2f, Y: %.2f, Z: %.2f m/s^2" % (icm.acceleration))
+        print("Gyro X:%.2f, Y: %.2f, Z: %.2f rads/s" % (icm.gyro))
+        print("")
+        time.sleep(0.5)
+
+For use with the ICM20948:
+
+.. code-block:: python3
+
+    import time
+    import board
+    import busio
+    import adafruit_icm20x
+
+    i2c = busio.I2C(board.SCL, board.SDA)
+    icm = adafruit_icm20x.ICM20948(i2c)
+
+    while True:
+        print("Acceleration: X:%.2f, Y: %.2f, Z: %.2f m/s^2" % (icm.acceleration))
+        print("Gyro X:%.2f, Y: %.2f, Z: %.2f rads/s" % (icm.gyro))
+        print("Magnetometer X:%.2f, Y: %.2f, Z: %.2f uT" % (icm.magnetic))
         print("")
         time.sleep(0.5)
 
@@ -75,7 +97,7 @@ Contributing
 ============
 
 Contributions are welcome! Please read our `Code of Conduct
-<https://github.com/adafruit/Adafruit_CircuitPython_ICM20649/blob/master/CODE_OF_CONDUCT.md>`_
+<https://github.com/adafruit/Adafruit_CircuitPython_ICM20X/blob/master/CODE_OF_CONDUCT.md>`_
 before contributing to help this project stay welcoming.
 
 Documentation
