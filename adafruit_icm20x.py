@@ -165,7 +165,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     _device_id = ROUnaryStruct(_ICM20X_WHO_AM_I, ">B")
     _bank_reg = UnaryStruct(_ICM20X_REG_BANK_SEL, ">B")
     _reset = RWBit(_ICM20X_PWR_MGMT_1, 7)
-    _sleep = RWBit(_ICM20X_PWR_MGMT_1, 6)
+    _sleep_reg = RWBit(_ICM20X_PWR_MGMT_1, 6)
     _low_power_en = RWBit(_ICM20X_PWR_MGMT_1, 5)
     _clock_source = RWBits(3, _ICM20X_PWR_MGMT_1, 0)
 
@@ -246,15 +246,10 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     def initialize(self):
         """Configure the sensors with the default settings. For use after calling `reset()`"""
 
-        self._bank = 0
-        sleep(0.005)
         self._sleep = False
-        sleep(0.005)
-
         self.accelerometer_range = AccelRange.RANGE_8G  # pylint: disable=no-member
         self.gyro_range = GyroRange.RANGE_500_DPS  # pylint: disable=no-member
 
-        # TODO: Test these
         self.accelerometer_data_rate_divisor = 20  # ~53.57Hz
         self.gyro_data_rate_divisor = 10  # ~100Hz
 
@@ -267,6 +262,20 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         sleep(0.005)
         while self._reset:
             sleep(0.005)
+
+    @property
+    def _sleep(self):
+        self._bank = 0
+        sleep(0.005)
+        self._sleep_reg = False
+        sleep(0.005)
+
+    @_sleep.setter
+    def _sleep(self, sleep_enabled):
+        self._bank = 0
+        sleep(0.005)
+        self._sleep_reg = sleep_enabled
+        sleep(0.005)
 
     @property
     def acceleration(self):
