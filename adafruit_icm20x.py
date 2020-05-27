@@ -245,6 +245,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
 
     def initialize(self):
         """Configure the sensors with the default settings. For use after calling `reset()`"""
+
         self._bank = 0
         sleep(0.005)
         self._sleep = False
@@ -253,6 +254,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         self.accelerometer_range = AccelRange.RANGE_8G  # pylint: disable=no-member
         self.gyro_range = GyroRange.RANGE_500_DPS  # pylint: disable=no-member
 
+        # TODO: Test these
         self.accelerometer_data_rate_divisor = 20  # ~53.57Hz
         self.gyro_data_rate_divisor = 10  # ~100Hz
 
@@ -416,7 +418,6 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
 
         Note: The data rates are set indirectly by setting a rate divisor according to the
         following formula: ``gyro_data_rate = 1100/(1+divisor)``
-
         This function does the math to find the divisor from a given rate but it will not
         be exactly as specified.
         """
@@ -518,6 +519,27 @@ class ICM20649(ICM20X):
         super().__init__(i2c_bus, address)
 
 
+# https://www.y-ic.es/datasheet/78/SMDSW.020-2OZ.pdf page 19
+_AK09916_WIA1 = 0x00
+_AK09916_WIA2 = 0x01
+_AK09916_ST1 = 0x10
+_AK09916_HXL = 0x11
+_AK09916_HXH = 0x12
+_AK09916_HYL = 0x13
+_AK09916_HYH = 0x14
+_AK09916_HZL = 0x15
+_AK09916_HZH = 0x16
+_AK09916_ST2 = 0x18
+_AK09916_CNTL2 = 0x31
+_AK09916_CNTL3 = 0x32
+
+
+class MagDataRate(CV):
+    """Options for ``magnetometer_data_rate``"""
+
+    pass  # pylint: disable=unnecessary-pass
+
+
 class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
     """Library for the ST ICM-20948 Wide-Range 6-DoF Accelerometer and Gyro.
 
@@ -563,6 +585,18 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
                 ("RANGE_2000_DPS", 3, 2000, 16.4),
             )
         )
+
+        # https://www.y-ic.es/datasheet/78/SMDSW.020-2OZ.pdf page 9
+        MagDataRate.add_values(
+            (
+                ("SHUTDOWN", 0x0, "Shutdown", None),
+                ("SINGLE", 0x1, "Single", None),
+                ("RATE_10HZ", 0x2, 10, None),
+                ("RATE_20HZ", 0x4, 20, None),
+                ("RATE_50HZ", 0x6, 50, None),
+                ("RATE_100HZ", 0x8, 100, None),
+            )
+        )
         super().__init__(i2c_bus, address)
         self._magnetometer_init()
 
@@ -600,18 +634,11 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
         self._i2c_master_enable = True
         sleep(0.020)
 
-    def _set_mag_data_rate(self, data_rate=0x08):
-        # https://www.y-ic.es/datasheet/78/SMDSW.020-2OZ.pdf page 9
-        # set the magnetometer data rate
-        # 0x1 = 10hz Continuous measurement mode 1
-        # 0x2 = 20hz Continuous measurement mode 2
-        # 0x4 = 50hz Continuous measurement mode 3
-        # 0x8 = 100hz Continuous measurement mode 4
-        self._write_mag_register(0x31, data_rate)
-
     def _magnetometer_init(self):
         self._magnetometer_enable()
-        self._set_mag_data_rate()
+        self.magnetometer_data_rate = (
+            MagDataRate.RATE_100HZ  # pylint: disable=no-member
+        )
 
         if not self._mag_configured:
             return False
@@ -646,6 +673,27 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
         z = full_data[2] * _ICM20X_UT_PER_LSB
 
         return (x, y, z)
+
+    @property
+    def magnetometer_data_rate(self):
+        """The rate at which the magenetometer takes measurements to update its output registers"""
+        # read mag DR register
+        self._read_mag_register(_AK09916_CNTL2)
+
+    @magnetometer_data_rate.setter
+    def magnetometer_data_rate(self, mag_rate):
+        # From https://www.y-ic.es/datasheet/78/SMDSW.020-2OZ.pdf page 9
+
+        # "When user wants to change operation mode, transit to Power-down mode first and then
+        # transit to other modes. After Power-down mode is set, at least 100 microsectons (Twait)
+        # is needed before setting another mode"
+        if not MagDataRate.is_valid(mag_rate):
+            raise AttributeError("range must be an `MagDataRate`")
+        self._write_mag_register(
+            _AK09916_CNTL2, MagDataRate.SHUTDOWN  # pylint: disable=no-member
+        )
+        sleep(0.001)
+        self._write_mag_register(_AK09916_CNTL2, mag_rate)
 
     def _read_mag_register(self, register_addr, slave_addr=0x0C):
         self._bank = 3
