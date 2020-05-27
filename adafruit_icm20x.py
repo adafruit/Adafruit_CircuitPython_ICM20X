@@ -487,13 +487,12 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         self._gyro_dlpf_config = cutoff_frequency
 
     @property
-    def low_power(self):
-        """Enables or disables a low power mode for the sensors digital circuitry"""
+    def _low_power(self):
         self._bank = 0
         return self._low_power_en
 
-    @low_power.setter
-    def low_power(self, enabled):
+    @_low_power.setter
+    def _low_power(self, enabled):
         self._bank = 0
         self._low_power_en = enabled
 
