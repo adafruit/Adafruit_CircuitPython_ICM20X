@@ -55,7 +55,6 @@ from adafruit_register.i2c_struct import UnaryStruct, ROUnaryStruct, Struct
 from adafruit_register.i2c_bit import RWBit, ROBit
 from adafruit_register.i2c_bits import RWBits
 
-# pylint: disable=bad-whitespace
 _ICM20649_DEFAULT_ADDRESS = 0x68  # icm20649 default i2c address
 _ICM20948_DEFAULT_ADDRESS = 0x69  # icm20649 default i2c address
 _ICM20649_DEVICE_ID = 0xE1  # Correct content of WHO_AM_I register
@@ -106,7 +105,7 @@ _ICM20X_UT_PER_LSB = 0.15  # mag data LSB value (fixed)
 _ICM20X_RAD_PER_DEG = 0.017453293  # Degrees/s to rad/s multiplier
 
 G_TO_ACCEL = 9.80665
-# pylint: enable=bad-whitespace
+
 class CV:
     """struct helper"""
 
