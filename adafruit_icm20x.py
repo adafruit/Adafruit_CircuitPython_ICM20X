@@ -106,6 +106,7 @@ _ICM20X_RAD_PER_DEG = 0.017453293  # Degrees/s to rad/s multiplier
 
 G_TO_ACCEL = 9.80665
 
+
 class CV:
     """struct helper"""
 
