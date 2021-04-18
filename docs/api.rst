@@ -6,3 +6,4 @@
 
 .. automodule:: adafruit_icm20x
    :members:
+   :member-order: bysource

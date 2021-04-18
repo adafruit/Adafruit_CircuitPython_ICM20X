@@ -112,25 +112,25 @@ class CV:
 
 
 class AccelRange(CV):
-    """Options for ``accelerometer_range``"""
+    """Options for :attr:`ICM20X.accelerometer_range`"""
 
     pass  # pylint: disable=unnecessary-pass
 
 
 class GyroRange(CV):
-    """Options for ``gyro_data_range``"""
+    """Options for :attr:`ICM20X.gyro_data_range`"""
 
     pass  # pylint: disable=unnecessary-pass
 
 
 class GyroDLPFFreq(CV):
-    """Options for ``gyro_dlpf_cutoff``"""
+    """Options for :attr:`ICM20X.gyro_dlpf_cutoff`"""
 
     pass  # pylint: disable=unnecessary-pass
 
 
 class AccelDLPFFreq(CV):
-    """Options for ``accel_dlpf_cutoff``"""
+    """Options for :attr:`ICM20X.accel_dlpf_cutoff`"""
 
     pass  # pylint: disable=unnecessary-pass
 
@@ -140,7 +140,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
 
 
     :param ~busio.I2C i2c_bus: The I2C bus the ICM20X is connected to.
-    :param address: The I2C slave address of the sensor
+    :param int address: The I2C slave address of the sensor
 
     """
 
@@ -227,7 +227,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         self.initialize()
 
     def initialize(self):
-        """Configure the sensors with the default settings. For use after calling `reset()`"""
+        """Configure the sensors with the default settings. For use after calling :meth:`reset`"""
 
         self._sleep = False
         self.accelerometer_range = AccelRange.RANGE_8G  # pylint: disable=no-member
@@ -262,7 +262,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
 
     @property
     def acceleration(self):
-        """The x, y, z acceleration values returned in a 3-tuple and are in m / s ^ 2."""
+        """The x, y, z acceleration values returned in a 3-tuple and are in :math:`m / s ^ 2.`"""
         self._bank = 0
         raw_accel_data = self._raw_accel_data
         sleep(0.005)
@@ -275,7 +275,8 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
 
     @property
     def gyro(self):
-        """The x, y, z angular velocity values returned in a 3-tuple and are in degrees / second"""
+        """The x, y, z angular velocity values returned in a 3-tuple and
+        are in :math:`degrees / second`"""
         self._bank = 0
         raw_gyro_data = self._raw_gyro_data
         x = self._scale_gyro_data(raw_gyro_data[0])
@@ -331,12 +332,19 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
 
     @property
     def accelerometer_data_rate_divisor(self):
-        """The divisor for the rate at which accelerometer measurements are taken in Hz
+        """
+        The divisor for the rate at which accelerometer measurements are taken in Hz
 
-        Note: The data rates are set indirectly by setting a rate divisor according to the
-        following formula: ``accelerometer_data_rate = 1125/(1+divisor)``
+        .. note::
+            The data rates are set indirectly by setting a rate divisor according to the
+            following formula:
+
+            .. math::
+
+                \\text{accelerometer_data_rate} = \\frac{1125}{1 + divisor}
 
         This function sets the raw rate divisor.
+
         """
         self._bank = 2
         raw_rate_divisor = self._accel_rate_divisor
@@ -355,10 +363,16 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
 
     @property
     def gyro_data_rate_divisor(self):
-        """The divisor for the rate at which gyro measurements are taken in Hz
+        """
+        The divisor for the rate at which gyro measurements are taken in Hz
 
-        Note: The data rates are set indirectly by setting a rate divisor according to the
-        following formula: ``gyro_data_rate = 1100/(1+divisor)``
+        .. note::
+            The data rates are set indirectly by setting a rate divisor according to the
+            following formula:
+
+            .. math::
+
+                \\text{gyro_data_rate} = \\frac{1100}{1 + divisor}
 
         This function sets the raw rate divisor.
         """
@@ -388,8 +402,14 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     def accelerometer_data_rate(self):
         """The rate at which accelerometer measurements are taken in Hz
 
-        Note: The data rates are set indirectly by setting a rate divisor according to the
-        following formula: ``accelerometer_data_rate = 1125/(1+divisor)``
+        .. note::
+
+            The data rates are set indirectly by setting a rate divisor according to the
+            following formula:
+
+            .. math::
+
+                \\text{accelerometer_data_rate} = \\frac{1125}{1 + divisor}
 
         This function does the math to find the divisor from a given rate but it will not be
         exactly as specified.
@@ -408,8 +428,14 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     def gyro_data_rate(self):
         """The rate at which gyro measurements are taken in Hz
 
-        Note: The data rates are set indirectly by setting a rate divisor according to the
-        following formula: ``gyro_data_rate = 1100/(1+divisor)``
+        .. note::
+            The data rates are set indirectly by setting a rate divisor according to the
+            following formula:
+
+            .. math::
+
+                \\text{gyro_data_rate } = \\frac{1100}{1 + divisor}
+
         This function does the math to find the divisor from a given rate but it will not
         be exactly as specified.
         """
@@ -429,8 +455,11 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         above the given frequency will be filtered out. Must be an ``AccelDLPFCutoff``.
         Use AccelDLPFCutoff.DISABLED to disable the filter
 
-        **Note** readings immediately following setting a cutoff frequency will be
-        inaccurate due to the filter "warming up" """
+        .. note::
+            Readings immediately following setting a cutoff frequency will be
+            inaccurate due to the filter "warming up"
+
+        """
         self._bank = 2
         return self._accel_dlpf_config
 
@@ -452,8 +481,11 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         given frequency will be filtered out. Must be a ``GyroDLPFFreq``. Use
         GyroDLPFCutoff.DISABLED to disable the filter
 
-        **Note** readings immediately following setting a cutoff frequency will be
-        inaccurate due to the filter "warming up" """
+        .. note::
+            Readings immediately following setting a cutoff frequency will be
+            inaccurate due to the filter "warming up"
+
+        """
         self._bank = 2
         return self._gyro_dlpf_config
 
@@ -484,7 +516,33 @@ class ICM20649(ICM20X):
     """Library for the ST ICM-20649 Wide-Range 6-DoF Accelerometer and Gyro.
 
     :param ~busio.I2C i2c_bus: The I2C bus the ICM20649 is connected to.
-    :param address: The I2C slave address of the sensor
+    :param int address: The I2C slave address of the sensor. Defaults to :const:`0x68`
+
+    **Quickstart: Importing and using the ICM20649 temperature sensor**
+
+        Here is one way of importing the `ICM20649` class so you can use it with the name ``icm``.
+        First you will need to import the libraries to use the sensor
+
+        .. code-block:: python
+
+            import busio
+            import board
+            import adafruit_icm20x
+
+        Once this is done you can define your `busio.I2C` object and define your sensor object
+
+        .. code-block:: python
+
+            i2c = busio.I2C(board.SCL, board.SDA)
+            icm = adafruit_icm20x.ICM20649(i2c)
+
+        Now you have access to the acceleration using :attr:`acceleration` attribute and
+        the gyro information using the :attr:`gyro` attribute.
+
+        .. code-block:: python
+
+                acceleration = icm.acceleration
+                gyro = icm.gyro
 
     """
 
@@ -526,7 +584,7 @@ _AK09916_CNTL3 = 0x32
 
 
 class MagDataRate(CV):
-    """Options for ``magnetometer_data_rate``"""
+    """Options for :attr:`ICM20948.magnetometer_data_rate`"""
 
     pass  # pylint: disable=unnecessary-pass
 
@@ -535,7 +593,37 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
     """Library for the ST ICM-20948 Wide-Range 6-DoF Accelerometer and Gyro.
 
     :param ~busio.I2C i2c_bus: The I2C bus the ICM20948 is connected to.
-    :param address: The I2C slave address of the sensor
+    :param int address: The I2C slave address of the sensor. Defaults to :const:`0x69`
+
+    **Quickstart: Importing and using the ICM20948 temperature sensor**
+
+        Here is one way of importing the `ICM20948` class so you can use it with the name ``icm``.
+        First you will need to import the libraries to use the sensor
+
+        .. code-block:: python
+
+            import busio
+            import board
+            import adafruit_icm20x
+
+        Once this is done you can define your `busio.I2C` object and define your sensor object
+
+        .. code-block:: python
+
+            i2c = busio.I2C(board.SCL, board.SDA)
+            icm = adafruit_icm20x.ICM20948(i2c)
+
+        Now you have access to the acceleration using :attr:`acceleration` attribute,
+        the gyro information using the :attr:`gyro` attribute and the magnetic information
+        using the :attr:`magnetic` attribute
+
+        .. code-block:: python
+
+                acceleration = icm.acceleration
+                gyro = icm.gyro
+                magnetic = icm.magnetic
+
+
     """
 
     _slave_finished = ROBit(_ICM20X_I2C_MST_STATUS, 6)
@@ -670,7 +758,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
 
     @property
     def magnetometer_data_rate(self):
-        """The rate at which the magenetometer takes measurements to update its output registers"""
+        """The rate at which the magnetometer takes measurements to update its output registers"""
         # read mag DR register
         self._read_mag_register(_AK09916_CNTL2)
 
@@ -707,7 +795,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
         finished = False
         for _i in range(100):
             finished = self._slave_finished
-            if finished:  # bueno!
+            if finished:  # bueno! :)
                 break
             sleep(0.010)
 
@@ -737,7 +825,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
         finished = False
         for _i in range(100):
             finished = self._slave_finished
-            if finished:  # bueno!
+            if finished:  # bueno! :)
                 break
             sleep(0.010)
 

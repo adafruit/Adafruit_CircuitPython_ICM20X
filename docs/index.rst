@@ -23,10 +23,14 @@ Table of Contents
 .. toctree::
     :caption: Tutorials
 
+    Adafruit's ICM20649 Learning Guide <https://learn.adafruit.com/adafruit-icm20649-wide-range-6-dof-imu-accelerometer-and-gyro>
+    Adafruit's ICM20948 Learning Guide <https://learn.adafruit.com/adafruit-tdk-invensense-icm-20948-9-dof-imu>
+
 .. toctree::
     :caption: Related Products
 
     Adafruit's ICM20649 Breakout <https://adafruit.com/product/4464>
+    Adafruit's ICM20948 Breakout <https://www.adafruit.com/product/4554>
 
 
 .. toctree::
