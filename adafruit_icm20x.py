@@ -520,7 +520,7 @@ class ICM20649(ICM20X):
 
     **Quickstart: Importing and using the ICM20649 temperature sensor**
 
-        Here is an example of using the `ICM2020649` class..
+        Here is an example of using the `ICM2020649` class.
         First you will need to import the libraries to use the sensor
 
         .. code-block:: python
