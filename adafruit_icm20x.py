@@ -520,7 +520,7 @@ class ICM20649(ICM20X):
 
     **Quickstart: Importing and using the ICM20649 temperature sensor**
 
-        Here is one way of importing the `ICM20649` class so you can use it with the name ``icm``.
+        Here is an example of using the `ICM2020649` class..
         First you will need to import the libraries to use the sensor
 
         .. code-block:: python
@@ -597,7 +597,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
 
     **Quickstart: Importing and using the ICM20948 temperature sensor**
 
-        Here is one way of importing the `ICM20948` class so you can use it with the name ``icm``.
+        Here is an example of using the `ICM20948` class.
         First you will need to import the libraries to use the sensor
 
         .. code-block:: python
