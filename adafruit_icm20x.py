@@ -140,7 +140,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
 
 
     :param ~busio.I2C i2c_bus: The I2C bus the ICM20X is connected to.
-    :param int address: The I2C slave address of the sensor
+    :param int address: The I2C address of the device.
 
     """
 
@@ -516,7 +516,7 @@ class ICM20649(ICM20X):
     """Library for the ST ICM-20649 Wide-Range 6-DoF Accelerometer and Gyro.
 
     :param ~busio.I2C i2c_bus: The I2C bus the ICM20649 is connected to.
-    :param int address: The I2C slave address of the sensor. Defaults to :const:`0x68`
+    :param int address: The I2C address of the device. Defaults to :const:`0x68`
 
     **Quickstart: Importing and using the ICM20649 temperature sensor**
 
@@ -592,7 +592,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
     """Library for the ST ICM-20948 Wide-Range 6-DoF Accelerometer and Gyro.
 
     :param ~busio.I2C i2c_bus: The I2C bus the ICM20948 is connected to.
-    :param int address: The I2C slave address of the sensor. Defaults to :const:`0x69`
+    :param int address: The I2C address of the device. Defaults to :const:`0x69`
 
     **Quickstart: Importing and using the ICM20948 temperature sensor**
 
