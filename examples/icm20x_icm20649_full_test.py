@@ -3,7 +3,6 @@
 
 import time
 import board
-import busio
 from adafruit_icm20x import ICM20649, AccelRange, GyroRange
 
 
@@ -15,7 +14,7 @@ def printNewMax(value, current_max, axis):
 
 
 # pylint:disable=no-member
-i2c = busio.I2C(board.SCL, board.SDA)
+i2c = board.I2C()  # uses board.SCL and board.SDA
 
 ism = ICM20649(i2c)
 

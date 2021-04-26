@@ -62,10 +62,9 @@ For use with the ICM20649:
 
     import time
     import board
-    import busio
     import adafruit_icm20x
 
-    i2c = busio.I2C(board.SCL, board.SDA)
+    i2c = board.I2C()   # uses board.SCL and board.SDA
     icm = adafruit_icm20x.ICM20649(i2c)
 
     while True:
@@ -80,10 +79,9 @@ For use with the ICM20948:
 
     import time
     import board
-    import busio
     import adafruit_icm20x
 
-    i2c = busio.I2C(board.SCL, board.SDA)
+    i2c = board.I2C()  # uses board.SCL and board.SDA
     icm = adafruit_icm20x.ICM20948(i2c)
 
     while True:
