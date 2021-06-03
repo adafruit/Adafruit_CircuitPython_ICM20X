@@ -79,7 +79,9 @@ _ICM20X_I2C_SLV0_CTRL = 0x5  # Controls for I2C microcontroller bus sensor 0
 _ICM20X_I2C_SLV0_DO = 0x6  # Sets I2C microcontroller bus sensor 0 data out
 
 _ICM20X_I2C_SLV4_ADDR = 0x13  # Sets I2C address for I2C microcontroller bus sensor 4
-_ICM20X_I2C_SLV4_REG = 0x14  # Sets register address for I2C microcontroller bus sensor 4
+_ICM20X_I2C_SLV4_REG = (
+    0x14  # Sets register address for I2C microcontroller bus sensor 4
+)
 _ICM20X_I2C_SLV4_CTRL = 0x15  # Controls for I2C microcontroller bus sensor 4
 _ICM20X_I2C_SLV4_DO = 0x16  # Sets I2C microcontroller bus sensor 4 data out
 _ICM20X_I2C_SLV4_DI = 0x17  # Sets I2C microcontroller bus sensor 4 data in
