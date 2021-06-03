@@ -51,10 +51,10 @@ _ICM20X_REG_BANK_SEL = 0x7F  # register bank selection register
 _ICM20X_PWR_MGMT_1 = 0x06  # primary power management register
 _ICM20X_ACCEL_XOUT_H = 0x2D  # first byte of accel data
 _ICM20X_GYRO_XOUT_H = 0x33  # first byte of accel data
-_ICM20X_I2C_MST_STATUS = 0x17  # I2C Master Status bits
+_ICM20X_I2C_MST_STATUS = 0x17  # I2C Microcontroller Status bits
 _ICM20948_EXT_SLV_SENS_DATA_00 = 0x3B
 
-_ICM20X_USER_CTRL = 0x03  # User Control Reg. Includes I2C Master
+_ICM20X_USER_CTRL = 0x03  # User Control Reg. Includes I2C Microcontroller
 _ICM20X_LP_CONFIG = 0x05  # Low Power config
 _ICM20X_REG_INT_PIN_CFG = 0xF  # Interrupt config register
 _ICM20X_REG_INT_ENABLE_0 = 0x10  # Interrupt enable register 0
@@ -70,19 +70,19 @@ _ICM20X_ACCEL_CONFIG_1 = 0x14
 
 # Bank 3
 
-_ICM20X_I2C_MST_ODR_CONFIG = 0x0  # Sets ODR for I2C master bus
-_ICM20X_I2C_MST_CTRL = 0x1  # I2C master bus config
-_ICM20X_I2C_MST_DELAY_CTRL = 0x2  # I2C master bus config
-_ICM20X_I2C_SLV0_ADDR = 0x3  # Sets I2C address for I2C master bus slave 0
-_ICM20X_I2C_SLV0_REG = 0x4  # Sets register address for I2C master bus slave 0
-_ICM20X_I2C_SLV0_CTRL = 0x5  # Controls for I2C master bus slave 0
-_ICM20X_I2C_SLV0_DO = 0x6  # Sets I2C master bus slave 0 data out
+_ICM20X_I2C_MST_ODR_CONFIG = 0x0  # Sets ODR for I2C microcontroller bus
+_ICM20X_I2C_MST_CTRL = 0x1  # I2C microcontroller bus config
+_ICM20X_I2C_MST_DELAY_CTRL = 0x2  # I2C microcontroller bus config
+_ICM20X_I2C_SLV0_ADDR = 0x3  # Sets I2C address for I2C microcontroller bus sensor 0
+_ICM20X_I2C_SLV0_REG = 0x4  # Sets register address for I2C microcontroller bus sensor 0
+_ICM20X_I2C_SLV0_CTRL = 0x5  # Controls for I2C microcontroller bus sensor 0
+_ICM20X_I2C_SLV0_DO = 0x6  # Sets I2C microcontroller bus sensor 0 data out
 
-_ICM20X_I2C_SLV4_ADDR = 0x13  # Sets I2C address for I2C master bus slave 4
-_ICM20X_I2C_SLV4_REG = 0x14  # Sets register address for I2C master bus slave 4
-_ICM20X_I2C_SLV4_CTRL = 0x15  # Controls for I2C master bus slave 4
-_ICM20X_I2C_SLV4_DO = 0x16  # Sets I2C master bus slave 4 data out
-_ICM20X_I2C_SLV4_DI = 0x17  # Sets I2C master bus slave 4 data in
+_ICM20X_I2C_SLV4_ADDR = 0x13  # Sets I2C address for I2C microcontroller bus sensor 4
+_ICM20X_I2C_SLV4_REG = 0x14  # Sets register address for I2C microcontroller bus sensor 4
+_ICM20X_I2C_SLV4_CTRL = 0x15  # Controls for I2C microcontroller bus sensor 4
+_ICM20X_I2C_SLV4_DO = 0x16  # Sets I2C microcontroller bus sensor 4 data out
+_ICM20X_I2C_SLV4_DI = 0x17  # Sets I2C microcontroller bus sensor 4 data in
 
 _ICM20X_UT_PER_LSB = 0.15  # mag data LSB value (fixed)
 _ICM20X_RAD_PER_DEG = 0.017453293  # Degrees/s to rad/s multiplier
@@ -689,7 +689,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
             if success:
                 return True
             self._reset_i2c_master()
-            # i2c master stuck, try resetting
+            # i2c microcontroller stuck, try resetting
         return False
 
     def _reset_i2c_master(self):
@@ -703,7 +703,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
         self._bypass_i2c_master = False
         sleep(0.005)
 
-        # no repeated start, i2c master clock = 345.60kHz
+        # no repeated start, i2c microcontroller clock = 345.60kHz
         self._bank = 3
         sleep(0.100)
         self._i2c_master_control = 0x17
