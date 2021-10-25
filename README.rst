@@ -91,6 +91,11 @@ For use with the ICM20948:
         print("")
         time.sleep(0.5)
 
+Documentation
+=============
+
+API documentation for this library can be found on `Read the Docs <https://circuitpython.readthedocs.io/projects/icm20x/en/latest/>`_.
+
 Contributing
 ============
 
