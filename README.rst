@@ -2,7 +2,7 @@ Introduction
 ============
 
 .. image:: https://readthedocs.org/projects/adafruit-circuitpython-icm20x/badge/?version=latest
-    :target: https://circuitpython.readthedocs.io/projects/icm20x/en/latest/
+    :target: https://docs.circuitpython.org/projects/icm20x/en/latest/
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/discord/327254708534116352.svg
@@ -94,7 +94,7 @@ For use with the ICM20948:
 Documentation
 =============
 
-API documentation for this library can be found on `Read the Docs <https://circuitpython.readthedocs.io/projects/icm20x/en/latest/>`_.
+API documentation for this library can be found on `Read the Docs <https://docs.circuitpython.org/projects/icm20x/en/latest/>`_.
 
 Contributing
 ============
