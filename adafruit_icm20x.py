@@ -28,7 +28,7 @@ Implementation Notes
 * Adafruit's Register library: https://github.com/adafruit/Adafruit_CircuitPython_Register
 """
 
-__version__ = "0.0.0-auto.0"
+__version__ = "0.0.0+auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_ICM20X.git"
 # Common imports; remove if unused or pylint will complain
 from time import sleep
