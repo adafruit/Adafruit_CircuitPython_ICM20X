@@ -7,6 +7,7 @@ from adafruit_icm20x import ICM20948
 
 cycles = 200
 i2c = board.I2C()  # uses board.SCL and board.SDA
+# i2c = board.STEMMA_I2C()  # For using the built-in STEMMA QT connector on a microcontroller
 icm = ICM20948(i2c)
 
 # Cycle between two data rates
