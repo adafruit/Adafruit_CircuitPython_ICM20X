@@ -374,7 +374,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
 
             .. math::
 
-                \\text{gyro_data_rate} = \\frac{1100}{1 + divisor}
+                \\text{gyro_data_rate} = \\frac{1125}{1 + divisor}
 
         This function sets the raw rate divisor.
         """
@@ -383,7 +383,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         raw_rate_divisor = self._gyro_rate_divisor
         sleep(0.005)
         self._bank = 0
-        # rate_hz = 1100/(1+raw_rate_divisor)
+        # rate_hz = 1125/(1+raw_rate_divisor)
         return raw_rate_divisor
 
     @gyro_data_rate_divisor.setter
@@ -398,7 +398,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         return 1125 / (1 + divisor)
 
     def _gyro_rate_calc(self, divisor):  # pylint:disable=no-self-use
-        return 1100 / (1 + divisor)
+        return 1125 / (1 + divisor)
 
     @property
     def accelerometer_data_rate(self):
@@ -436,7 +436,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
 
             .. math::
 
-                \\text{gyro_data_rate } = \\frac{1100}{1 + divisor}
+                \\text{gyro_data_rate } = \\frac{1125}{1 + divisor}
 
         This function does the math to find the divisor from a given rate but it will not
         be exactly as specified.
@@ -445,8 +445,8 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
 
     @gyro_data_rate.setter
     def gyro_data_rate(self, value):
-        if value < self._gyro_rate_calc(4095) or value > self._gyro_rate_calc(0):
-            raise AttributeError("Gyro data rate must be between 4.30 and 1100.0")
+        if value < self._gyro_rate_calc(255) or value > self._gyro_rate_calc(0):
+            raise AttributeError("Gyro data rate must be between 4.30 and 562.5")
 
         divisor = round(((1125.0 - value) / value))
         self.gyro_data_rate_divisor = divisor
@@ -522,28 +522,28 @@ class ICM20649(ICM20X):
 
     **Quickstart: Importing and using the ICM20649 temperature sensor**
 
-        Here is an example of using the :class:`ICM2020649` class.
-        First you will need to import the libraries to use the sensor
+    Here is an example of using the :class:`ICM2020649` class.
+    First you will need to import the libraries to use the sensor
 
-        .. code-block:: python
+    .. code-block:: python
 
-            import board
-            import adafruit_icm20x
+        import board
+        import adafruit_icm20x
 
-        Once this is done you can define your `board.I2C` object and define your sensor object
+    Once this is done you can define your `board.I2C` object and define your sensor object
 
-        .. code-block:: python
+    .. code-block:: python
 
-            i2c = board.I2C()   # uses board.SCL and board.SDA
-            icm = adafruit_icm20x.ICM20649(i2c)
+        i2c = board.I2C()   # uses board.SCL and board.SDA
+        icm = adafruit_icm20x.ICM20649(i2c)
 
-        Now you have access to the acceleration using :attr:`acceleration` attribute and
-        the gyro information using the :attr:`gyro` attribute.
+    Now you have access to the acceleration using :attr:`acceleration` attribute and
+    the gyro information using the :attr:`gyro` attribute.
 
-        .. code-block:: python
+    .. code-block:: python
 
-                acceleration = icm.acceleration
-                gyro = icm.gyro
+            acceleration = icm.acceleration
+            gyro = icm.gyro
 
     """
 
@@ -598,30 +598,30 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
 
     **Quickstart: Importing and using the ICM20948 temperature sensor**
 
-        Here is an example of using the :class:`ICM20948` class.
-        First you will need to import the libraries to use the sensor
+    Here is an example of using the :class:`ICM20948` class.
+    First you will need to import the libraries to use the sensor
 
-        .. code-block:: python
+    .. code-block:: python
 
-            import board
-            import adafruit_icm20x
+        import board
+        import adafruit_icm20x
 
-        Once this is done you can define your `board.I2C` object and define your sensor object
+    Once this is done you can define your `board.I2C` object and define your sensor object
 
-        .. code-block:: python
+    .. code-block:: python
 
-            i2c = board.I2C()   # uses board.SCL and board.SDA
-            icm = adafruit_icm20x.ICM20948(i2c)
+        i2c = board.I2C()   # uses board.SCL and board.SDA
+        icm = adafruit_icm20x.ICM20948(i2c)
 
-        Now you have access to the acceleration using :attr:`acceleration` attribute,
-        the gyro information using the :attr:`gyro` attribute and the magnetic information
-        using the :attr:`magnetic` attribute
+    Now you have access to the acceleration using :attr:`acceleration` attribute,
+    the gyro information using the :attr:`gyro` attribute and the magnetic information
+    using the :attr:`magnetic` attribute
 
-        .. code-block:: python
+    .. code-block:: python
 
-                acceleration = icm.acceleration
-                gyro = icm.gyro
-                magnetic = icm.magnetic
+            acceleration = icm.acceleration
+            gyro = icm.gyro
+            magnetic = icm.magnetic
 
 
     """
