@@ -220,7 +220,6 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         self._bank_reg = value << 4
 
     def __init__(self, i2c_bus, address):
-
         self.i2c_device = i2c_device.I2CDevice(i2c_bus, address)
         self._bank = 0
         if not self._device_id in [_ICM20649_DEVICE_ID, _ICM20948_DEVICE_ID]:
@@ -316,7 +315,8 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     @property
     def gyro_range(self):
         """Adjusts the range of values that the sensor can measure, from 500 Degrees/second to 4000
-        degrees/s. Note that larger ranges will be less accurate. Must be a `GyroRange`"""
+        degrees/s. Note that larger ranges will be less accurate. Must be a `GyroRange`
+        """
         return self._cached_gyro_range
 
     @gyro_range.setter
@@ -548,7 +548,6 @@ class ICM20649(ICM20X):
     """
 
     def __init__(self, i2c_bus, address=_ICM20649_DEFAULT_ADDRESS):
-
         AccelRange.add_values(
             (
                 ("RANGE_4G", 0, 4, 8192),
@@ -699,7 +698,6 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
         self._i2c_master_reset = True
 
     def _magnetometer_enable(self):
-
         self._bank = 0
         sleep(0.100)
         self._bypass_i2c_master = False

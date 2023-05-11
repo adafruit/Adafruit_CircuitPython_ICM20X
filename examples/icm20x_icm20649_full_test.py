@@ -32,7 +32,6 @@ ism.gyro_data_rate = 125
 ism.accelerometer_data_rate = 4095
 st = time.monotonic()
 while time.monotonic() - st < 0.250:
-
     print(
         "Accel X:%.2f Y:%.2f Z:%.2f ms^2 Gyro X:%.2f Y:%.2f Z:%.2f degrees/s"
         % (ism.acceleration + ism.gyro)
