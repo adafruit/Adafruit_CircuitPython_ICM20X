@@ -531,11 +531,11 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     def gravity(self):
         """The gravity magnitude in m/s^2."""
         return self._gravity
-    
-    @property.setter
+
+    @gravity.setter
     def gravity(self, value):
         self._gravity = value
-    
+
 class ICM20649(ICM20X):
     """Library for the ST ICM-20649 Wide-Range 6-DoF Accelerometer and Gyro.
 

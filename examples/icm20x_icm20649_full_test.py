@@ -17,7 +17,7 @@ def printNewMax(value, current_max, axis):
 i2c = board.I2C()  # uses board.SCL and board.SDA
 # i2c = board.STEMMA_I2C()  # For using the built-in STEMMA QT connector on a microcontroller
 
-ism = ICM20649(i2c)
+ism = ICM20649(i2c, address=0x69)
 
 ism.accelerometer_range = AccelRange.RANGE_30G
 print("Accelerometer range set to: %d g" % AccelRange.string[ism.accelerometer_range])
