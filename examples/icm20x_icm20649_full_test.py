@@ -28,8 +28,8 @@ print("Gyro range set to: %d DPS" % GyroRange.string[ism.gyro_range])
 ax_max = ay_max = az_max = 0
 gx_max = gy_max = gz_max = 0
 
-ism.gyro_data_rate = 125
-ism.accelerometer_data_rate = 4095
+ism.gyro_data_rate = 1100
+ism.accelerometer_data_rate = 1125
 st = time.monotonic()
 while time.monotonic() - st < 0.250:
     print(
