@@ -266,7 +266,6 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         """The x, y, z acceleration values returned in a 3-tuple and are in :math:`m / s ^ 2.`"""
         self._bank = 0
         raw_accel_data = self._raw_accel_data
-        sleep(0.005)
 
         x = self._scale_xl_data(raw_accel_data[0])
         y = self._scale_xl_data(raw_accel_data[1])
@@ -287,7 +286,6 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         return (x, y, z)
 
     def _scale_xl_data(self, raw_measurement):
-        sleep(0.005)
         return raw_measurement / AccelRange.lsb[self._cached_accel_range] * G_TO_ACCEL
 
     def _scale_gyro_data(self, raw_measurement):
@@ -746,7 +744,6 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
 
         self._bank = 0
         full_data = self._raw_mag_data
-        sleep(0.005)
 
         x = full_data[0] * _ICM20X_UT_PER_LSB
         y = full_data[1] * _ICM20X_UT_PER_LSB
