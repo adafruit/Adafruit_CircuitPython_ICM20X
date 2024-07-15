@@ -528,7 +528,7 @@ class ICM20649(ICM20X):
             import board
             import adafruit_icm20x
 
-        Once this is done you can define your `board.I2C` object and define your sensor object
+        Once this is done you can define your ``board.I2C`` object and define your sensor object
 
         .. code-block:: python
 
@@ -603,7 +603,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
             import board
             import adafruit_icm20x
 
-        Once this is done you can define your `board.I2C` object and define your sensor object
+        Once this is done you can define your ``board.I2C`` object and define your sensor object
 
         .. code-block:: python
 
