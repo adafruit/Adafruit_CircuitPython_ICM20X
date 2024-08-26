@@ -7,7 +7,7 @@ import adafruit_icm20x
 
 i2c = board.I2C()  # uses board.SCL and board.SDA
 # i2c = board.STEMMA_I2C()  # For using the built-in STEMMA QT connector on a microcontroller
-icm = adafruit_icm20x.ICM20649(i2c)
+icm = adafruit_icm20x.ICM20649(i2c, address=0x69)
 
 while True:
     print("Acceleration: X:%.2f, Y: %.2f, Z: %.2f m/s^2" % (icm.acceleration))

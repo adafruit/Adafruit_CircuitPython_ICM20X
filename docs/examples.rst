@@ -16,6 +16,15 @@ Test using all the ICM20649 sensor capabilities
     :caption: examples/examples/icm20x_icm20649_full_test.py
     :linenos:
 
+ICM20649 data rate test
+-----------------------
+
+Test using all the ICM20649 sensor capabilities
+
+.. literalinclude:: ../examples/icm20x_icm20649_data_rate_test.py
+    :caption: examples/examples/icm20x_icm20649_data_rate_test.py
+    :linenos:
+
 ICM20948 Simple test
 --------------------
 

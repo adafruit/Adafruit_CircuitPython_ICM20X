@@ -60,6 +60,15 @@ _ICM20X_REG_INT_PIN_CFG = 0xF  # Interrupt config register
 _ICM20X_REG_INT_ENABLE_0 = 0x10  # Interrupt enable register 0
 _ICM20X_REG_INT_ENABLE_1 = 0x11  # Interrupt enable register 1
 
+_ICM20X_REG_INT_STATUS_0 = (
+    0x19  # Interrupt status register 0   Wake on motion, DMP int, i2c int
+)
+_ICM20X_REG_INT_STATUS_1 = (
+    0x1A  # Interrupt status register 1   data register from all sensors
+)
+_ICM20X_REG_INT_STATUS_2 = 0x1B  # Interrupt status register 2   FIFO overflow
+_ICM20X_REG_INT_STATUS_3 = 0x1C  # Interrupt status register 3   Watermark interrupt
+
 # Bank 2
 _ICM20X_GYRO_SMPLRT_DIV = 0x00
 _ICM20X_GYRO_CONFIG_1 = 0x01
@@ -159,6 +168,8 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
 
     _lp_config_reg = UnaryStruct(_ICM20X_LP_CONFIG, ">B")
 
+    _data_ready = ROBit(_ICM20X_REG_INT_STATUS_1, 0)
+
     _i2c_master_cycle_en = RWBit(_ICM20X_LP_CONFIG, 6)
     _accel_cycle_en = RWBit(_ICM20X_LP_CONFIG, 5)
     _gyro_cycle_en = RWBit(_ICM20X_LP_CONFIG, 4)
@@ -237,6 +248,8 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         self.accelerometer_data_rate_divisor = 20  # ~53.57Hz
         self.gyro_data_rate_divisor = 10  # ~100Hz
 
+        self._gravity = G_TO_ACCEL
+
     def reset(self):
         """Resets the internal registers and restores the default settings"""
         self._bank = 0
@@ -246,6 +259,11 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         sleep(0.005)
         while self._reset:
             sleep(0.005)
+
+    def data_ready(self):
+        """Checks if new data is available"""
+        self._bank = 0
+        return self._data_ready
 
     @property
     def _sleep(self):
@@ -286,7 +304,9 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         return (x, y, z)
 
     def _scale_xl_data(self, raw_measurement):
-        return raw_measurement / AccelRange.lsb[self._cached_accel_range] * G_TO_ACCEL
+        return (
+            raw_measurement / AccelRange.lsb[self._cached_accel_range] * self._gravity
+        )
 
     def _scale_gyro_data(self, raw_measurement):
         return (
@@ -422,7 +442,8 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
             raise AttributeError(
                 "Accelerometer data rate must be between 0.27 and 1125.0"
             )
-        self.accelerometer_data_rate_divisor = value
+        divisor = round(((1125.0 - value) / value))
+        self.accelerometer_data_rate_divisor = divisor
 
     @property
     def gyro_data_rate(self):
@@ -445,8 +466,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     def gyro_data_rate(self, value):
         if value < self._gyro_rate_calc(4095) or value > self._gyro_rate_calc(0):
             raise AttributeError("Gyro data rate must be between 4.30 and 1100.0")
-
-        divisor = round(((1125.0 - value) / value))
+        divisor = round(((1100.0 - value) / value))
         self.gyro_data_rate_divisor = divisor
 
     @property
@@ -510,6 +530,15 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     def _low_power(self, enabled):
         self._bank = 0
         self._low_power_en = enabled
+
+    @property
+    def gravity(self):
+        """The gravity magnitude in m/s^2."""
+        return self._gravity
+
+    @gravity.setter
+    def gravity(self, value):
+        self._gravity = value
 
 
 class ICM20649(ICM20X):
@@ -740,7 +769,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
 
     @property
     def magnetic(self):
-        """The current magnetic field strengths onthe X, Y, and Z axes in uT (micro-teslas)"""
+        """The current magnetic field strengths on the X, Y, and Z axes in uT (micro-teslas)"""
 
         self._bank = 0
         full_data = self._raw_mag_data
