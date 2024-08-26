@@ -17,7 +17,7 @@ Test using all the ICM20649 sensor capabilities
     :linenos:
 
 ICM20649 data rate test
-------------------
+-----------------------
 
 Test using all the ICM20649 sensor capabilities
 
