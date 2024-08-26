@@ -32,11 +32,11 @@ __version__ = "0.0.0+auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_ICM20X.git"
 # Common imports; remove if unused or pylint will complain
 from time import sleep
-from adafruit_bus_device import i2c_device
 
-from adafruit_register.i2c_struct import UnaryStruct, ROUnaryStruct, Struct
-from adafruit_register.i2c_bit import RWBit, ROBit
+from adafruit_bus_device import i2c_device
+from adafruit_register.i2c_bit import ROBit, RWBit
 from adafruit_register.i2c_bits import RWBits
+from adafruit_register.i2c_struct import ROUnaryStruct, Struct, UnaryStruct
 
 _ICM20649_DEFAULT_ADDRESS = 0x68  # icm20649 default i2c address
 _ICM20948_DEFAULT_ADDRESS = 0x69  # icm20649 default i2c address
@@ -60,12 +60,8 @@ _ICM20X_REG_INT_PIN_CFG = 0xF  # Interrupt config register
 _ICM20X_REG_INT_ENABLE_0 = 0x10  # Interrupt enable register 0
 _ICM20X_REG_INT_ENABLE_1 = 0x11  # Interrupt enable register 1
 
-_ICM20X_REG_INT_STATUS_0 = (
-    0x19  # Interrupt status register 0   Wake on motion, DMP int, i2c int
-)
-_ICM20X_REG_INT_STATUS_1 = (
-    0x1A  # Interrupt status register 1   data register from all sensors
-)
+_ICM20X_REG_INT_STATUS_0 = 0x19  # Interrupt status register 0   Wake on motion, DMP int, i2c int
+_ICM20X_REG_INT_STATUS_1 = 0x1A  # Interrupt status register 1   data register from all sensors
 _ICM20X_REG_INT_STATUS_2 = 0x1B  # Interrupt status register 2   FIFO overflow
 _ICM20X_REG_INT_STATUS_3 = 0x1C  # Interrupt status register 3   Watermark interrupt
 
@@ -88,9 +84,7 @@ _ICM20X_I2C_SLV0_CTRL = 0x5  # Controls for I2C microcontroller bus sensor 0
 _ICM20X_I2C_SLV0_DO = 0x6  # Sets I2C microcontroller bus sensor 0 data out
 
 _ICM20X_I2C_SLV4_ADDR = 0x13  # Sets I2C address for I2C microcontroller bus sensor 4
-_ICM20X_I2C_SLV4_REG = (
-    0x14  # Sets register address for I2C microcontroller bus sensor 4
-)
+_ICM20X_I2C_SLV4_REG = 0x14  # Sets register address for I2C microcontroller bus sensor 4
 _ICM20X_I2C_SLV4_CTRL = 0x15  # Controls for I2C microcontroller bus sensor 4
 _ICM20X_I2C_SLV4_DO = 0x16  # Sets I2C microcontroller bus sensor 4 data out
 _ICM20X_I2C_SLV4_DI = 0x17  # Sets I2C microcontroller bus sensor 4 data in
@@ -304,14 +298,10 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         return (x, y, z)
 
     def _scale_xl_data(self, raw_measurement):
-        return (
-            raw_measurement / AccelRange.lsb[self._cached_accel_range] * self._gravity
-        )
+        return raw_measurement / AccelRange.lsb[self._cached_accel_range] * self._gravity
 
     def _scale_gyro_data(self, raw_measurement):
-        return (
-            raw_measurement / GyroRange.lsb[self._cached_gyro_range]
-        ) * _ICM20X_RAD_PER_DEG
+        return (raw_measurement / GyroRange.lsb[self._cached_gyro_range]) * _ICM20X_RAD_PER_DEG
 
     @property
     def accelerometer_range(self):
@@ -439,10 +429,8 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     @accelerometer_data_rate.setter
     def accelerometer_data_rate(self, value):
         if value < self._accel_rate_calc(4095) or value > self._accel_rate_calc(0):
-            raise AttributeError(
-                "Accelerometer data rate must be between 0.27 and 1125.0"
-            )
-        divisor = round(((1125.0 - value) / value))
+            raise AttributeError("Accelerometer data rate must be between 0.27 and 1125.0")
+        divisor = round((1125.0 - value) / value)
         self.accelerometer_data_rate_divisor = divisor
 
     @property
@@ -466,7 +454,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     def gyro_data_rate(self, value):
         if value < self._gyro_rate_calc(4095) or value > self._gyro_rate_calc(0):
             raise AttributeError("Gyro data rate must be between 4.30 and 1100.0")
-        divisor = round(((1100.0 - value) / value))
+        divisor = round((1100.0 - value) / value)
         self.gyro_data_rate_divisor = divisor
 
     @property
@@ -796,7 +784,8 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
         if not MagDataRate.is_valid(mag_rate):
             raise AttributeError("range must be an `MagDataRate`")
         self._write_mag_register(
-            _AK09916_CNTL2, MagDataRate.SHUTDOWN  # pylint: disable=no-member
+            _AK09916_CNTL2,
+            MagDataRate.SHUTDOWN,  # pylint: disable=no-member
         )
         sleep(0.001)
         self._write_mag_register(_AK09916_CNTL2, mag_rate)
@@ -810,9 +799,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
         sleep(0.005)
         self._slave4_reg = register_addr
         sleep(0.005)
-        self._slave4_ctrl = (
-            0x80  # enable, don't raise interrupt, write register value, no delay
-        )
+        self._slave4_ctrl = 0x80  # enable, don't raise interrupt, write register value, no delay
         sleep(0.005)
         self._bank = 0
 
@@ -840,9 +827,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
         sleep(0.005)
         self._slave4_do = value
         sleep(0.005)
-        self._slave4_ctrl = (
-            0x80  # enable, don't raise interrupt, write register value, no delay
-        )
+        self._slave4_ctrl = 0x80  # enable, don't raise interrupt, write register value, no delay
         sleep(0.005)
         self._bank = 0
 
