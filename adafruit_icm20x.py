@@ -60,8 +60,12 @@ _ICM20X_REG_INT_PIN_CFG = 0xF  # Interrupt config register
 _ICM20X_REG_INT_ENABLE_0 = 0x10  # Interrupt enable register 0
 _ICM20X_REG_INT_ENABLE_1 = 0x11  # Interrupt enable register 1
 
-_ICM20X_REG_INT_STATUS_0 = 0x19  # Interrupt status register 0   Wake on motion, DMP int, i2c int
-_ICM20X_REG_INT_STATUS_1 = 0x1A  # Interrupt status register 1   data register from all sensors
+_ICM20X_REG_INT_STATUS_0 = (
+    0x19  # Interrupt status register 0   Wake on motion, DMP int, i2c int
+)
+_ICM20X_REG_INT_STATUS_1 = (
+    0x1A  # Interrupt status register 1   data register from all sensors
+)
 _ICM20X_REG_INT_STATUS_2 = 0x1B  # Interrupt status register 2   FIFO overflow
 _ICM20X_REG_INT_STATUS_3 = 0x1C  # Interrupt status register 3   Watermark interrupt
 
@@ -256,7 +260,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         while self._reset:
             sleep(0.005)
 
-    def dataReady(self):
+    def data_ready(self):
         """Checks if new data is available"""
         self._bank = 0
         return self._data_ready
@@ -300,7 +304,9 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         return (x, y, z)
 
     def _scale_xl_data(self, raw_measurement):
-        return raw_measurement / AccelRange.lsb[self._cached_accel_range] * self._gravity
+        return (
+            raw_measurement / AccelRange.lsb[self._cached_accel_range] * self._gravity
+        )
 
     def _scale_gyro_data(self, raw_measurement):
         return (
@@ -533,6 +539,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     @gravity.setter
     def gravity(self, value):
         self._gravity = value
+
 
 class ICM20649(ICM20X):
     """Library for the ST ICM-20649 Wide-Range 6-DoF Accelerometer and Gyro.

@@ -15,21 +15,22 @@ print("Accelerometer range set to: %d g" % AccelRange.string[ism.accelerometer_r
 ism.gyro_range = GyroRange.RANGE_500_DPS
 print("Gyro range set to: %d DPS" % GyroRange.string[ism.gyro_range])
 
-ism.gyro_data_rate = 1100          # 1100 max
-ism.accelerometer_data_rate = 1125 # 1125 max
+ism.gyro_data_rate = 1100  # 1100 max
+ism.accelerometer_data_rate = 1125  # 1125 max
 
-print('Gyro rate: {:f}'.format(ism.gyro_data_rate))
-print('Accel rate: {:f}'.format(ism.accelerometer_data_rate))
+print("Gyro rate: {:f}".format(ism.gyro_data_rate))
+print("Accel rate: {:f}".format(ism.accelerometer_data_rate))
 
 ism.gravity = 9.8
 
 previousTime = time.perf_counter()
 while True:
-    if ism.dataReady:
+    if ism.data_ready:
         currentTime = time.perf_counter()
-        print('\033[2J')
+        print("\033[2J")
         print(
-            "Accel X:%5.2f Y:%5.2f Z:%5.2f ms^2 Gyro X:%8.3f Y:%8.3f Z:%8.3f degrees/s Sample Rate: %8.1f Hz"
+            "Accel X:%5.2f Y:%5.2f Z:%5.2f ms^2 "
+            "Gyro X:%8.3f Y:%8.3f Z:%8.3f degrees/s Sample Rate: %8.1f Hz"
             % (*ism.acceleration, *ism.gyro, (1 / (currentTime - previousTime)))
         )
         previousTime = currentTime
