@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: MIT
 
 import time
+
 import board
+
 from adafruit_icm20x import ICM20948
 
 cycles = 200

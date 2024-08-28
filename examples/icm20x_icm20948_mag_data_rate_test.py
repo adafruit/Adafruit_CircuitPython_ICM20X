@@ -3,8 +3,10 @@
 
 # pylint: disable=no-member
 import time
+
 import board
-from adafruit_icm20x import MagDataRate, ICM20948
+
+from adafruit_icm20x import ICM20948, MagDataRate
 
 cycles = 200
 i2c = board.I2C()  # uses board.SCL and board.SDA
