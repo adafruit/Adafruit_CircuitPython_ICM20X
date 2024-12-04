@@ -38,6 +38,13 @@ from adafruit_register.i2c_bit import ROBit, RWBit
 from adafruit_register.i2c_bits import RWBits
 from adafruit_register.i2c_struct import ROUnaryStruct, Struct, UnaryStruct
 
+try:
+    from typing import Iterable, List, Optional, Tuple, Union
+
+    from busio import I2C
+except ImportError:
+    pass
+
 _ICM20649_DEFAULT_ADDRESS = 0x68  # icm20649 default i2c address
 _ICM20948_DEFAULT_ADDRESS = 0x69  # icm20649 default i2c address
 _ICM20649_DEVICE_ID = 0xE1  # Correct content of WHO_AM_I register
@@ -99,7 +106,7 @@ class CV:
     """struct helper"""
 
     @classmethod
-    def add_values(cls, value_tuples):
+    def add_values(cls, value_tuples: Iterable[Tuple]) -> None:
         """Add CV values to the class"""
         cls.string = {}
         cls.lsb = {}
@@ -111,7 +118,9 @@ class CV:
             cls.lsb[value] = lsb
 
     @classmethod
-    def is_valid(cls, value):
+    def is_valid(
+        cls, value: Union["AccelRange", "GyroRange", "GyroDLPFFreq", "AccelDLPFFreq"]
+    ) -> bool:
         """Validate that a given value is a member"""
         return value in cls.string
 
@@ -217,14 +226,14 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     )
 
     @property
-    def _bank(self):
+    def _bank(self) -> int:
         return self._bank_reg >> 4
 
     @_bank.setter
-    def _bank(self, value):
+    def _bank(self, value: int) -> None:
         self._bank_reg = value << 4
 
-    def __init__(self, i2c_bus, address):
+    def __init__(self, i2c_bus: I2C, address: int) -> None:
         self.i2c_device = i2c_device.I2CDevice(i2c_bus, address)
         self._bank = 0
         if not self._device_id in [_ICM20649_DEVICE_ID, _ICM20948_DEVICE_ID]:
@@ -232,7 +241,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         self.reset()
         self.initialize()
 
-    def initialize(self):
+    def initialize(self) -> None:
         """Configure the sensors with the default settings. For use after calling :meth:`reset`"""
 
         self._sleep = False
@@ -244,7 +253,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
 
         self._gravity = G_TO_ACCEL
 
-    def reset(self):
+    def reset(self) -> None:
         """Resets the internal registers and restores the default settings"""
         self._bank = 0
 
@@ -254,27 +263,27 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         while self._reset:
             sleep(0.005)
 
-    def data_ready(self):
+    def data_ready(self) -> None:
         """Checks if new data is available"""
         self._bank = 0
         return self._data_ready
 
     @property
-    def _sleep(self):
+    def _sleep(self) -> None:
         self._bank = 0
         sleep(0.005)
         self._sleep_reg = False
         sleep(0.005)
 
     @_sleep.setter
-    def _sleep(self, sleep_enabled):
+    def _sleep(self, sleep_enabled: bool) -> None:
         self._bank = 0
         sleep(0.005)
         self._sleep_reg = sleep_enabled
         sleep(0.005)
 
     @property
-    def acceleration(self):
+    def acceleration(self) -> Tuple[float, float, float]:
         """The x, y, z acceleration values returned in a 3-tuple and are in :math:`m / s ^ 2.`"""
         self._bank = 0
         raw_accel_data = self._raw_accel_data
@@ -286,7 +295,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         return (x, y, z)
 
     @property
-    def gyro(self):
+    def gyro(self) -> Tuple[float, float, float]:
         """The x, y, z angular velocity values returned in a 3-tuple and
         are in :math:`degrees / second`"""
         self._bank = 0
@@ -297,20 +306,20 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
 
         return (x, y, z)
 
-    def _scale_xl_data(self, raw_measurement):
+    def _scale_xl_data(self, raw_measurement: float) -> float:
         return raw_measurement / AccelRange.lsb[self._cached_accel_range] * self._gravity
 
-    def _scale_gyro_data(self, raw_measurement):
+    def _scale_gyro_data(self, raw_measurement: float) -> float:
         return (raw_measurement / GyroRange.lsb[self._cached_gyro_range]) * _ICM20X_RAD_PER_DEG
 
     @property
-    def accelerometer_range(self):
+    def accelerometer_range(self) -> AccelRange:
         """Adjusts the range of values that the sensor can measure, from +/- 4G to +/-30G
         Note that larger ranges will be less accurate. Must be an `AccelRange`"""
         return self._cached_accel_range
 
     @accelerometer_range.setter
-    def accelerometer_range(self, value):  # pylint: disable=no-member
+    def accelerometer_range(self, value: AccelRange) -> None:  # pylint: disable=no-member
         if not AccelRange.is_valid(value):
             raise AttributeError("range must be an `AccelRange`")
         self._bank = 2
@@ -321,14 +330,14 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         self._bank = 0
 
     @property
-    def gyro_range(self):
+    def gyro_range(self) -> GyroRange:
         """Adjusts the range of values that the sensor can measure, from 500 Degrees/second to 4000
         degrees/s. Note that larger ranges will be less accurate. Must be a `GyroRange`
         """
         return self._cached_gyro_range
 
     @gyro_range.setter
-    def gyro_range(self, value):
+    def gyro_range(self, value: GyroRange) -> None:
         if not GyroRange.is_valid(value):
             raise AttributeError("range must be a `GyroRange`")
 
@@ -341,7 +350,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         sleep(0.100)  # needed to let new range settle
 
     @property
-    def accelerometer_data_rate_divisor(self):
+    def accelerometer_data_rate_divisor(self) -> int:
         """
         The divisor for the rate at which accelerometer measurements are taken in Hz
 
@@ -364,7 +373,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         return raw_rate_divisor
 
     @accelerometer_data_rate_divisor.setter
-    def accelerometer_data_rate_divisor(self, value):
+    def accelerometer_data_rate_divisor(self, value: int) -> None:
         # check that value <= 4095
         self._bank = 2
         sleep(0.005)
@@ -372,7 +381,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         sleep(0.005)
 
     @property
-    def gyro_data_rate_divisor(self):
+    def gyro_data_rate_divisor(self) -> int:
         """
         The divisor for the rate at which gyro measurements are taken in Hz
 
@@ -395,21 +404,21 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         return raw_rate_divisor
 
     @gyro_data_rate_divisor.setter
-    def gyro_data_rate_divisor(self, value):
+    def gyro_data_rate_divisor(self, value: int) -> None:
         # check that value <= 255
         self._bank = 2
         sleep(0.005)
         self._gyro_rate_divisor = value
         sleep(0.005)
 
-    def _accel_rate_calc(self, divisor):  # pylint:disable=no-self-use
+    def _accel_rate_calc(self, divisor: int) -> float:  # pylint:disable=no-self-use
         return 1125 / (1 + divisor)
 
-    def _gyro_rate_calc(self, divisor):  # pylint:disable=no-self-use
+    def _gyro_rate_calc(self, divisor: int) -> float:  # pylint:disable=no-self-use
         return 1100 / (1 + divisor)
 
     @property
-    def accelerometer_data_rate(self):
+    def accelerometer_data_rate(self) -> float:
         """The rate at which accelerometer measurements are taken in Hz
 
         .. note::
@@ -427,14 +436,14 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         return self._accel_rate_calc(self.accelerometer_data_rate_divisor)
 
     @accelerometer_data_rate.setter
-    def accelerometer_data_rate(self, value):
+    def accelerometer_data_rate(self, value: int) -> None:
         if value < self._accel_rate_calc(4095) or value > self._accel_rate_calc(0):
             raise AttributeError("Accelerometer data rate must be between 0.27 and 1125.0")
         divisor = round((1125.0 - value) / value)
         self.accelerometer_data_rate_divisor = divisor
 
     @property
-    def gyro_data_rate(self):
+    def gyro_data_rate(self) -> float:
         """The rate at which gyro measurements are taken in Hz
 
         .. note::
@@ -451,14 +460,14 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         return self._gyro_rate_calc(self.gyro_data_rate_divisor)
 
     @gyro_data_rate.setter
-    def gyro_data_rate(self, value):
+    def gyro_data_rate(self, value: int) -> None:
         if value < self._gyro_rate_calc(4095) or value > self._gyro_rate_calc(0):
             raise AttributeError("Gyro data rate must be between 4.30 and 1100.0")
         divisor = round((1100.0 - value) / value)
         self.gyro_data_rate_divisor = divisor
 
     @property
-    def accel_dlpf_cutoff(self):
+    def accel_dlpf_cutoff(self) -> AccelDLPFFreq:
         """The cutoff frequency for the accelerometer's digital low pass filter. Signals
         above the given frequency will be filtered out. Must be an ``AccelDLPFCutoff``.
         Use AccelDLPFCutoff.DISABLED to disable the filter
@@ -472,7 +481,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         return self._accel_dlpf_config
 
     @accel_dlpf_cutoff.setter
-    def accel_dlpf_cutoff(self, cutoff_frequency):
+    def accel_dlpf_cutoff(self, cutoff_frequency: AccelDLPFFreq) -> None:
         if not AccelDLPFFreq.is_valid(cutoff_frequency):
             raise AttributeError("accel_dlpf_cutoff must be an `AccelDLPFFreq`")
         self._bank = 2
@@ -484,7 +493,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         self._accel_dlpf_config = cutoff_frequency
 
     @property
-    def gyro_dlpf_cutoff(self):
+    def gyro_dlpf_cutoff(self) -> GyroDLPFFreq:
         """The cutoff frequency for the gyro's digital low pass filter. Signals above the
         given frequency will be filtered out. Must be a ``GyroDLPFFreq``. Use
         GyroDLPFCutoff.DISABLED to disable the filter
@@ -498,7 +507,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         return self._gyro_dlpf_config
 
     @gyro_dlpf_cutoff.setter
-    def gyro_dlpf_cutoff(self, cutoff_frequency):
+    def gyro_dlpf_cutoff(self, cutoff_frequency: GyroDLPFFreq) -> None:
         if not GyroDLPFFreq.is_valid(cutoff_frequency):
             raise AttributeError("gyro_dlpf_cutoff must be a `GyroDLPFFreq`")
         self._bank = 2
@@ -510,22 +519,22 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
         self._gyro_dlpf_config = cutoff_frequency
 
     @property
-    def _low_power(self):
+    def _low_power(self) -> bool:
         self._bank = 0
         return self._low_power_en
 
     @_low_power.setter
-    def _low_power(self, enabled):
+    def _low_power(self, enabled: bool) -> None:
         self._bank = 0
         self._low_power_en = enabled
 
     @property
-    def gravity(self):
+    def gravity(self) -> float:
         """The gravity magnitude in m/s^2."""
         return self._gravity
 
     @gravity.setter
-    def gravity(self, value):
+    def gravity(self, value: float) -> None:
         self._gravity = value
 
 
@@ -562,7 +571,7 @@ class ICM20649(ICM20X):
 
     """
 
-    def __init__(self, i2c_bus, address=_ICM20649_DEFAULT_ADDRESS):
+    def __init__(self, i2c_bus: I2C, address: int = _ICM20649_DEFAULT_ADDRESS):
         AccelRange.add_values(
             (
                 ("RANGE_4G", 0, 4, 8192),
@@ -661,7 +670,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
     _slave4_do = UnaryStruct(_ICM20X_I2C_SLV4_DO, ">B")
     _slave4_di = UnaryStruct(_ICM20X_I2C_SLV4_DI, ">B")
 
-    def __init__(self, i2c_bus, address=_ICM20948_DEFAULT_ADDRESS):
+    def __init__(self, i2c_bus: I2C, address: int = _ICM20948_DEFAULT_ADDRESS):
         AccelRange.add_values(
             (
                 ("RANGE_2G", 0, 2, 16384),
@@ -697,7 +706,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
     # See their Python library here:
     # https://github.com/sparkfun/Qwiic_9DoF_IMU_ICM20948_Py
     @property
-    def _mag_configured(self):
+    def _mag_configured(self) -> bool:
         success = False
         for _i in range(5):
             success = self._mag_id() is not None
@@ -708,11 +717,11 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
             # i2c microcontroller stuck, try resetting
         return False
 
-    def _reset_i2c_master(self):
+    def _reset_i2c_master(self) -> None:
         self._bank = 0
         self._i2c_master_reset = True
 
-    def _magnetometer_enable(self):
+    def _magnetometer_enable(self) -> None:
         self._bank = 0
         sleep(0.100)
         self._bypass_i2c_master = False
@@ -729,7 +738,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
         self._i2c_master_enable = True
         sleep(0.020)
 
-    def _magnetometer_init(self):
+    def _magnetometer_init(self) -> bool:
         self._magnetometer_enable()
         self.magnetometer_data_rate = (
             MagDataRate.RATE_100HZ  # pylint: disable=no-member
@@ -743,7 +752,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
         return True
 
     # set up slave0 for reading into the bank 0 data registers
-    def _setup_mag_readout(self):
+    def _setup_mag_readout(self) -> None:
         self._bank = 3
         self._slave0_addr = 0x8C
         sleep(0.005)
@@ -752,11 +761,11 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
         self._slave0_ctrl = 0x89  # enable
         sleep(0.005)
 
-    def _mag_id(self):
+    def _mag_id(self) -> int:
         return self._read_mag_register(0x01)
 
     @property
-    def magnetic(self):
+    def magnetic(self) -> Tuple[float, float, float]:
         """The current magnetic field strengths on the X, Y, and Z axes in uT (micro-teslas)"""
 
         self._bank = 0
@@ -769,13 +778,13 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
         return (x, y, z)
 
     @property
-    def magnetometer_data_rate(self):
+    def magnetometer_data_rate(self) -> MagDataRate:
         """The rate at which the magnetometer takes measurements to update its output registers"""
         # read mag DR register
         self._read_mag_register(_AK09916_CNTL2)
 
     @magnetometer_data_rate.setter
-    def magnetometer_data_rate(self, mag_rate):
+    def magnetometer_data_rate(self, mag_rate: MagDataRate) -> None:
         # From https://www.y-ic.es/datasheet/78/SMDSW.020-2OZ.pdf page 9
 
         # "When user wants to change operation mode, transit to Power-down mode first and then
@@ -790,7 +799,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
         sleep(0.001)
         self._write_mag_register(_AK09916_CNTL2, mag_rate)
 
-    def _read_mag_register(self, register_addr, slave_addr=0x0C):
+    def _read_mag_register(self, register_addr: int, slave_addr: int = 0x0C) -> Optional[int]:
         self._bank = 3
 
         slave_addr |= 0x80  # set top bit for read
@@ -818,7 +827,7 @@ class ICM20948(ICM20X):  # pylint:disable=too-many-instance-attributes
         sleep(0.005)
         return mag_register_data
 
-    def _write_mag_register(self, register_addr, value, slave_addr=0x0C):
+    def _write_mag_register(self, register_addr: int, value: int, slave_addr: int = 0x0C):
         self._bank = 3
 
         self._slave4_addr = slave_addr
