@@ -297,7 +297,7 @@ class ICM20X:  # pylint:disable=too-many-instance-attributes
     @property
     def gyro(self) -> Tuple[float, float, float]:
         """The x, y, z angular velocity values returned in a 3-tuple and
-        are in :math:`degrees / second`"""
+        are in :math:`radians / second`"""
         self._bank = 0
         raw_gyro_data = self._raw_gyro_data
         x = self._scale_gyro_data(raw_gyro_data[0])
