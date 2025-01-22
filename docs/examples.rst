@@ -60,3 +60,12 @@ Example showing ICM20948 sensor cycling between two magnetic data rates
 .. literalinclude:: ../examples/icm20x_icm20948_mag_data_rate_test.py
     :caption: examples/icm20x_icm20948_mag_data_rate_test.py
     :linenos:
+
+DisplayIO Simpletest
+---------------------
+
+This is a simple test for boards with built-in display.
+
+.. literalinclude:: ../examples/icm20x_icm20948_displayio_simpletest.py
+    :caption: examples/icm20x_icm20948_displayio_simpletest.py
+    :linenos:
