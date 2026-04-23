@@ -12,10 +12,10 @@ i2c = board.I2C()  # uses board.SCL and board.SDA
 ism = ICM20649(i2c, address=0x69)
 
 ism.accelerometer_range = AccelRange.RANGE_4G
-print("Accelerometer range set to: %d g" % AccelRange.string[ism.accelerometer_range])
+print(f"Accelerometer range set to: {AccelRange.string[ism.accelerometer_range]:d} g")
 
 ism.gyro_range = GyroRange.RANGE_500_DPS
-print("Gyro range set to: %d DPS" % GyroRange.string[ism.gyro_range])
+print(f"Gyro range set to: {GyroRange.string[ism.gyro_range]:d} DPS")
 
 ism.gyro_data_rate = 1100  # 1100 max
 ism.accelerometer_data_rate = 1125  # 1125 max
